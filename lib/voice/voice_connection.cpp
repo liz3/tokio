@@ -27,26 +27,25 @@ void VoiceConnection::send(char buffer[], int size) {
 }
 void VoiceConnection::preparePacket(unsigned char raw[], int len) {
   unsigned char nonceBuffer[24] = {0};
-
-  unsigned char* encrypted;
-  int status = crypto_stream_xsalsa20_xor(encrypted, raw, (unsigned long long) len, nonceBuffer, key);
-
-
   encode_seq++;
   encode_count++;
   timestamp += kFrameSize;
   VoiceConnection::setIntBigEndian(nonceBuffer, 0, encode_count);
-  //todo encryption
+
+  unsigned char* encrypted;
+  int encrypt_len = crypto_stream_xsalsa20_xor(encrypted, raw, (unsigned long long) len, nonceBuffer, key);
   char f[12 + len + 4];
   std::stringbuf buffer;
-  buffer.pubsetbuf(f, 12 + len + 4);
+  buffer.pubsetbuf(f, 12 + encrypt_len + 4);
   std::ostream os (&buffer);
   os << ((unsigned char)0x80);
   os << ((unsigned char)0x78);
   os << ((unsigned char)encode_seq);
   os << timestamp;
   os << ssrc;
-  os << raw; //TODO use encrypted audio
+//  buffer.sputn (encrypted, encrypt_len);
+//  std::string str = std::string(encrypted, encrypt_len);
+  os << encrypted;
   os << 0 << 0 << 0 << 0;
   os << nonceBuffer;
 
