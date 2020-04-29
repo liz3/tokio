@@ -1,5 +1,5 @@
-#ifndef DIS_LIGHT_DIS_WEBSOCKET_H
-#define DIS_LIGHT_DIS_WEBSOCKET_H
+#ifndef DIS_LIGHT_DIS_VOICE_WEBSOCKET_H
+#define DIS_LIGHT_DIS_VOICE_WEBSOCKET_H
 
 #include <ixwebsocket/IXWebSocket.h>
 #include <iostream>
@@ -14,19 +14,17 @@
 #include <sstream>
 #include "discord_utils.h"
 #include "../zstr/zstr.h"
+#include "../voice/voice_connection.h"
 #include "event_handler.h"
-using json = nlohmann::json;
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
-using VoiceInitCallback = std::function<void(const json&,const json&)>;
-class DisWebsocket {
+using json = nlohmann::json;
+class DisVoiceWebsocket {
 public:
-  DisWebsocket(std::string& socket_url, std::string& token, bool auto_connect);
+  DisVoiceWebsocket(const json& server_state, const json& voice_state, std::string& id, std::string& server_id, std::string& channel_id);
   void connect();
   void stop();
   void externalClose(const Napi::CallbackInfo& info);
   void registerEventListener(std::string& name, Napi::Function callback);
-  void handleVoiceInit(std::string& server_id, std::string& channel_id, const VoiceInitCallback& cb);
-  std::string own_id;
 private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
@@ -35,16 +33,23 @@ private:
   void close();
   void sendMessage(int opcode, json data);
   void sendHeartBeat();
-  static void setupHeartBeatInterval(DisWebsocket* instance, int interval);
+  static void setupHeartBeatInterval(DisVoiceWebsocket* instance, int interval);
   void handleAuth();
+  void updateSpeakingState(bool speaking);
   long seq;
   std::string token;
   std::stringstream message_stream;
   unsigned int ZLIB_SUFFIX = 0x0000FFFF;
   std::unique_ptr<zstr::istream> zlib_ctx;
-  bool waitingVoiceConnect = false;
-  VoiceInitCallback voiceInitCallback;
-  std::vector<json> voice_states;
-
+  std::string ip;
+  std::string session_id;
+  int ssrc = 0;
+  int port = 0;
+  bool connected = false;
+  std::string dis_id;
+  std::string server_id;
+  std::string channel_id;
+  VoiceConnection* voiceConn = nullptr;
+  int heart_beat_interval = 0;
 };
 #endif
