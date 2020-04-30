@@ -4,8 +4,11 @@
 #include <ixwebsocket/IXNetSystem.h>
 #include <nlohmann/json.hpp>
 #include <unistd.h>
+#include <libavcodec/avcodec.h>
+
 
 static void init(const Napi::CallbackInfo& info) {
+
   Napi::Env env = info.Env();
   if (info.Length() != 2) {
     Napi::TypeError::New(env, "Wrong number of arguments")

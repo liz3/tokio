@@ -19,5 +19,7 @@ public:
 private:
   std::string token;
 
+
+
 };
 #endif //DIS_LIGHT_INSTANCE_H

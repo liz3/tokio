@@ -1,6 +1,5 @@
 #include "instance.h"
 using json = nlohmann::json;
-
 Instance::Instance(std::string token) {
   this->token = token;
 }
@@ -44,11 +43,22 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                 socket->connect();
                                               }
       ));
+  obj.Set("playBackTest", Napi::Function::New(env, [finalThis](const Napi::CallbackInfo& info) {
+                                                     std::cout << "test";
+                                                     if (info.Length() != 1) {
+                                                       Napi::TypeError::New(info.Env(), "Wrong number of arguments")
+                                                         .ThrowAsJavaScriptException();
+                                                       return;
+                                                     }
+                                                     std::string file  = info[0].As<Napi::String>().Utf8Value();
+
+                                                   }
+      ));
   return obj;
 }
 void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std::string& server_id, std::string& channel_id, DisWebsocket* sock, DisVoiceWebsocket* vc_socket) {
   //TODO create thread safe function for callback
-   if(vc_socket != nullptr) {
+  if(vc_socket != nullptr) {
 
     //TODO handle
 //    return;
@@ -62,6 +72,7 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
 
                                                });
 }
+
 int Instance::bootstrap() {
   discord_simple_response response = discord_get_gateway_endpoint(this->token);
   if(!response.success) {

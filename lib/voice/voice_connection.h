@@ -17,6 +17,9 @@
 #include <chrono>
 #include <sodium.h>
 #include <sodium/crypto_stream_xsalsa20.h>
+#include <mad.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 constexpr auto kFrameSize = 960;
 constexpr auto kNumChannels = 2;
 constexpr auto kSampleRate = 48000;
@@ -34,7 +37,12 @@ class VoiceConnection {
   int encode_seq = 0;
   int encode_count = 0;
   int timestamp = 0;
-  void preparePacket(unsigned char raw[], int len);
+  std::string preparePacket(unsigned char raw[], int len);
+  //mad stuff
+  struct mad_stream mad_stream;
+  struct mad_frame mad_frame;
+  struct mad_synth mad_synth;
+
  public:
   VoiceConnection(std::string& address, int port, int ssrc);
   static short getShortBigEndian(char arr[], int offset)
@@ -49,13 +57,26 @@ class VoiceConnection {
         arr[offset + 2] = (unsigned char) ((it >> 8)  & 0xFF);
         arr[offset + 3] = (unsigned char) ( it         & 0xFF);
     }
+ static int scale(mad_fixed_t sample) {
+     /* round */
+     sample += (1L << (MAD_F_FRACBITS - 16));
+     /* clip */
+     if (sample >= MAD_F_ONE)
+         sample = MAD_F_ONE - 1;
+     else if (sample < -MAD_F_ONE)
+         sample = -MAD_F_ONE;
+     /* quantize */
+     return sample >> (MAD_F_FRACBITS + 1 - 16);
+}
   bool setupAndHandleSocket();
   std::string own_ip;
   int own_port = 0;
   void startHeartBeat(int interval);
-  void send(char buffer[], int size);
+  void send(unsigned char buffer[], int size);
   unsigned char* key;
   int keyLength = 0;
+  void play_test();
+
 };
 
 #endif

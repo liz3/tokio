@@ -140,7 +140,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
              f["data"] = data;
              std::cout << "sending auth message" <<  f.dump() << "\n";
              this->sendMessage(1, f);
-             this->updateSpeakingState(false);
+             this->updateSpeakingState(true);
            }
          }
          return;
@@ -159,6 +159,12 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
          this->voiceConn->keyLength = token.size();
        //  std::cout << std::string(key) << "\n";
        //   this->voiceConn->key = key;
+         auto finalThis = this;
+           std::thread t([finalThis](){
+                           std::cout << "starting offthread\n";
+                           finalThis->voiceConn->play_test();
+                         });
+           t.detach();
            return;
        }
        if (parsed["t"].is_string()) {

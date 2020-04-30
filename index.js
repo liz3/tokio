@@ -13,4 +13,5 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
     console.log("Message event", data);
   });
   bot.connect();
+ // bot.playBackTest("/Users/liz3/Downloads/FILV x Beatmount - Say What You Wanna.mp3");
 });
