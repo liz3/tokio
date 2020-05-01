@@ -37,7 +37,7 @@ class VoiceConnection {
   short encode_seq = 0;
   int encode_count = 0;
   int timestamp = 0;
-  std::stringstream preparePacket(unsigned char raw[], int len);
+  void preparePacket(uint8_t*& encodedAudioData, int len);
   //mad stuff
   struct mad_stream mad_stream;
   struct mad_frame mad_frame;
