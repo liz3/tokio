@@ -136,11 +136,15 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
              json data;
              data["address"] = this->voiceConn->own_ip;
              data["port"] = this->voiceConn->own_port;
-             data["mode"] = "xsalsa20_poly1305_lite";
+             data["mode"] = "xsalsa20_poly1305";
              f["data"] = data;
              std::cout << "sending auth message" <<  f.dump() << "\n";
              this->sendMessage(1, f);
-             this->updateSpeakingState(true);
+             json meta;
+             meta["audio_ssrc"] = this->ssrc;
+             meta["video_ssrc"] = 0;
+             meta["rtx_ssrc"] = 0;
+             this->sendMessage(12, meta);
            }
          }
          return;
@@ -151,17 +155,18 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
          // ready with key
          this->voiceConn->startHeartBeat(this->heart_beat_interval);
          json token = parsed["d"]["secret_key"];
-         unsigned char key[token.size()];
+         std::vector<unsigned char> key;
          for(int i = 0; i < token.size(); i++)  {
-           key[i] = (unsigned char)token[i].get<char>();
+          key.push_back(token[i].get<unsigned char>() & 0xFF);
          }
          this->voiceConn->key = key;
-         this->voiceConn->keyLength = token.size();
+
        //  std::cout << std::string(key) << "\n";
        //   this->voiceConn->key = key;
          auto finalThis = this;
            std::thread t([finalThis](){
                            std::cout << "starting offthread\n";
+                           finalThis->updateSpeakingState(true);
                            finalThis->voiceConn->play_test();
                          });
            t.detach();

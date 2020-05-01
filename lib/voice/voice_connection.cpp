@@ -20,44 +20,61 @@ void VoiceConnection::startHeartBeat(int interval) {
   t.detach();
 }
 void VoiceConnection::send(unsigned char buffer[], int size) {
-
- sendto(sockfd, (const char *)buffer, size,
+  std::cout << address << ":" << port << "\n";
+  sendto(sockfd,buffer, sizeof(unsigned char) * size,
         MSG_WAITALL, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
 }
-std::string VoiceConnection::preparePacket(unsigned char raw[], int len) {
-  unsigned char nonceBuffer[24] = {0};
+std::stringstream VoiceConnection::preparePacket(unsigned char raw[], int len) {
+ //  VoiceConnection::setIntBigEndian(nonceBuffer, 0, encode_count);
   encode_seq++;
   encode_count++;
   timestamp += kFrameSize;
-  VoiceConnection::setIntBigEndian(nonceBuffer, 0, encode_count);
-
-  unsigned char* encrypted;
-  int encrypt_len = crypto_stream_xsalsa20_xor(encrypted, raw, (unsigned long long) len, nonceBuffer, key);
-  char f[12 + len + 4];
-  std::stringbuf buffer;
-  buffer.pubsetbuf(f, 12 + encrypt_len + 4);
-  std::ostream os (&buffer);
-  os << ((unsigned char)0x80);
-  os << ((unsigned char)0x78);
-  os << ((unsigned char)encode_seq);
-  os << timestamp;
-  os << ssrc;
-//  buffer.sputn ((const char *)encrypted, encrypt_len);
-  for(int i = 0; i < encrypt_len; i++) {
-    os << encrypted[i];
+  std::stringstream nonceStream;
+  nonceStream << ((unsigned char)0x80) << ((unsigned char)0x78);
+  nonceStream.write((const char *)&encode_seq, sizeof(encode_seq));
+  nonceStream.write((const char *) &timestamp, sizeof(timestamp));
+  nonceStream.write((const char *)&ssrc, sizeof(ssrc));
+//  std::cout << std::hex << nonceStream << "\n";
+  for(int i = 0; i < 12; i++) {
+    nonceStream << (unsigned char) 0x00;
   }
-//  std::string str = std::string(encrypted, encrypt_len);
- // os << encrypted;
-  os << 0 << 0 << 0 << 0;
-  os << nonceBuffer;
-  return buffer.str();
+  auto nonce_vec = VoiceConnection::to_vector(nonceStream);
+  std::cout << nonce_vec.size() << "\n";
+  unsigned char* nonce_arr = &nonce_vec[0];
+  // for(int i = 0; i < 24; i++) {
+  //   std::cout << std::hex << nonce_arr[i] << " ";
+  // }
+
+  std::cout << "\n";
+  unsigned char encrypted_data[len];
+// int encrypted_len = crypto_stream_xsalsa20_xor(encrypted_data, raw, (unsigned long long)len,  nonce_arr, const_cast<const unsigned char*>((unsigned char*)key.begin()));
+  int encrypted_len = crypto_stream_xsalsa20_xor(encrypted_data, raw, (unsigned long long)len,  nonce_arr, &key[0]);
+  std::cout << "in func " << encrypted_len << "\n";
+  char to_print[30];
+  for(int i = 0; i < 30; i++) {
+    to_print[i] = (char)encrypted_data[i];
+  }
+  std::cout << VoiceConnection::string_to_hex(std::string(to_print, 30));
+  std::cout << "\n";
+  for(int i = 0; i < 30; i++) {
+    to_print[i] = (char)raw[i];
+  }
+  std::cout << VoiceConnection::string_to_hex(std::string(to_print, 30));
+  std::cout << "\n";
+
+  nonceStream.write((const char *)encrypted_data, sizeof(const char) * len);
+//  free(encrypted_data);
+  return nonceStream;
 }
 void VoiceConnection::play_test() {
+//  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   mad_stream_init(&mad_stream);
   mad_synth_init(&mad_synth);
   mad_frame_init(&mad_frame);
   std::vector<opus_int16> audio_set(kFrameSize * kNumChannels);
+  std::vector<opus_int16> next_frame;
+
   //TEMP!!
   auto path = std::string("/Users/liz3/Downloads/FILV x Beatmount - Say What You Wanna.mp3");
   const char* filename = path.c_str();
@@ -82,7 +99,9 @@ void VoiceConnection::play_test() {
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
   FILE* pFile;
     pFile = fopen("file.opus", "wb");
-  // Decode frame and synthesize loop
+    // Decode frame and synthesize loop
+    int s = kNumChannels * kFrameSize;
+
   while (1) {
 
     // Decode frame from the stream
@@ -102,16 +121,12 @@ void VoiceConnection::play_test() {
       std::cout << "not two channels, returning\n";
       return;
     }
-    audio_set.clear();
 
     int sample_len = mad_synth.pcm.length;
     std::cout << "Mad_snyth sample length: " << sample_len << "\n";
     mad_fixed_t const *left_ch = pcm.samples[0], *right_ch = pcm.samples[1];
 
-   int s = kNumChannels * kFrameSize;
     while(sample_len--) {
-     if(s < 0) break;
-      s--;
       int left;
       int right;
       left = (*left_ch++);
@@ -120,31 +135,50 @@ void VoiceConnection::play_test() {
       l = (opus_int16)(left >> 16);
       r = (opus_int16)(right >> 16);
 
- //     opus_int16 out =l<<8|r;
-   //   audio_set.push_back(l);
-      fwrite(&l, sizeof(opus_int16), 1, pFile);
-      fwrite(&r, sizeof(opus_int16), 1, pFile);
-    }
-
-    std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
-
-    int len = 0;
-    for(auto entry : opus_out) {
-      len += entry.size();
-    }
-    std::cout << "Opus length: " << len << "\n";
-    unsigned char raw[len];
-    len = 0;
-    for(auto entry : opus_out) {
-      for(unsigned const char c : entry) {
-        raw[len] = c;
-        len++;
+      opus_int16 out =r<<8|l;
+      if(s < 0) {
+        next_frame.push_back(out);
+        continue;
       }
+      s--;
+      audio_set.push_back(out);
+   //   fwrite(&l, sizeof(opus_int16), 1, pFile);
+   //   fwrite(&r, sizeof(opus_int16), 1, pFile);
     }
- //   fwrite (raw , sizeof(unsigned char), sizeof(raw), pFile);
- //   std::string encrypted = this->preparePacket(raw, len);
-    //std::cout << "encrypted length: " << encrypted.length() << "\n";
-//    this->send((unsigned  char *)encrypted.c_str(), encrypted.length() - 1);
+
+    if(s < 0) {
+      std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
+      std::cout << "total opus packets: " << opus_out.size() << "\n";
+      for(auto entry : opus_out) {
+        int len = 0;
+
+        std::cout << "Opus length: " << entry.size() << "\n";
+        unsigned char raw[entry.size()];
+        for(unsigned char c : entry) {
+         raw[len] = c;
+          len++;
+        }
+
+        //   fwrite (raw , sizeof(unsigned char), sizeof(raw), pFile);
+       std::stringstream encrypted = this->preparePacket(raw, entry.size());
+       auto vec = VoiceConnection::to_vector(encrypted);
+       int plen = sizeof(unsigned char) * vec.size();
+       std::cout << plen << "\n";
+       unsigned char* datap = &vec[0];
+        //std::cout << "encrypted length: " << encrypted.length() << "\n";
+       this->send(datap, plen);
+        //encoder.ResetState();
+      }
+
+      audio_set.clear();
+      s = kNumChannels * kFrameSize;
+      std::cout << "pushing for next entrry: " << next_frame.size() << "\n";
+      for (auto entry : next_frame) {
+        audio_set.push_back(entry);
+      s--;
+      }
+      next_frame.clear();
+    }
     std::cout << "send\n============";
   }
   fclose(pFile);
@@ -187,5 +221,6 @@ bool VoiceConnection::setupAndHandleSocket() {
   std::string out = std::string(recv_buff);
   own_ip = ip;
   own_port = port;
+  sodium_init();
   return true;
 }

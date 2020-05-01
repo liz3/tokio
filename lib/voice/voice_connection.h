@@ -34,16 +34,30 @@ class VoiceConnection {
   //soxket
   int sockfd;
   struct sockaddr_in servaddr;
-  int encode_seq = 0;
+  short encode_seq = 0;
   int encode_count = 0;
   int timestamp = 0;
-  std::string preparePacket(unsigned char raw[], int len);
+  std::stringstream preparePacket(unsigned char raw[], int len);
   //mad stuff
   struct mad_stream mad_stream;
   struct mad_frame mad_frame;
   struct mad_synth mad_synth;
 
  public:
+ static std::string string_to_hex(const std::string& input)
+{
+    static const char hex_digits[] = "0123456789ABCDEF";
+
+    std::string output;
+    output.reserve(input.length() * 2);
+    for (unsigned char c : input)
+    {
+        output.push_back(hex_digits[c >> 4]);
+        output.push_back(hex_digits[c & 15]);
+    }
+    return output;
+}
+
   VoiceConnection(std::string& address, int port, int ssrc);
   static short getShortBigEndian(char arr[], int offset)
   {
@@ -68,12 +82,31 @@ class VoiceConnection {
      /* quantize */
      return sample >> (MAD_F_FRACBITS + 1 - 16);
 }
+static std::vector<unsigned char> to_vector(std::stringstream& ss)
+{
+    // discover size of data in stream
+    ss.seekg(0, std::ios::beg);
+    auto bof = ss.tellg();
+    ss.seekg(0, std::ios::end);
+    auto stream_size = std::size_t(ss.tellg() - bof);
+    ss.seekg(0, std::ios::beg);
+
+    // make your vector long enough
+    std::vector<unsigned char> v(stream_size);
+
+    // read directly in
+    ss.read((char*)v.data(), std::streamsize(v.size()));
+
+    return v;
+}
+
+
   bool setupAndHandleSocket();
   std::string own_ip;
   int own_port = 0;
   void startHeartBeat(int interval);
   void send(unsigned char buffer[], int size);
-  unsigned char* key;
+  std::vector<unsigned char> key;
   int keyLength = 0;
   void play_test();
 
