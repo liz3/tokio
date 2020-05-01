@@ -111,30 +111,19 @@ void VoiceConnection::play_test() {
    int s = kNumChannels * kFrameSize;
     while(sample_len--) {
      if(s < 0) break;
-   //   std::cout << s << "\n";
       s--;
-      long left;
-      long right;
+      int left;
+      int right;
       left = (*left_ch++);
       right = (*right_ch++);
       opus_int16 l,r;
-      l = (opus_int16)(left >> 56);
-      r = (opus_int16)(right >> 56);
-    //  left = left << 48;
-     // right = right >> 4;
-      //int out = left|right;
-      //std::cout <<  std::hex <<  ((int)left<<48) << "\n";
-   //   audio_set.push_back(left);
-  //    audio_set.push_back(right);
-   //   fwrite(&left, sizeof(int), 1, pFile);
-      opus_int16 out = l<<8|r;
-      fwrite(&out, sizeof(opus_int16), 1, pFile);
-     //       fwrite(&r, sizeof(opus_int16), 1, pFile);
-  //    audio_set.push_back(left);
-  //    audio_set.push_back(right);
-//
-      fwrite(&left, sizeof(int), 1, pFile);
-    fwrite(&right, sizeof(int), 1, pFile);
+      l = (opus_int16)(left >> 16);
+      r = (opus_int16)(right >> 16);
+
+ //     opus_int16 out =l<<8|r;
+   //   audio_set.push_back(l);
+      fwrite(&l, sizeof(opus_int16), 1, pFile);
+      fwrite(&r, sizeof(opus_int16), 1, pFile);
     }
 
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
