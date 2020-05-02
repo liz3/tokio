@@ -21,7 +21,7 @@ Install native dependencies
 
 1. `git clone https://github.com/machinezone/IXWebSocket`
 2. `cd IXWebSocket && mkdir build`
-3. (ONLY Gnu/Linux)  add `set(CMAKE_POSITION_INDEPENDENT_CODE ON)` into IXWebsocket`s CMakeLists after `set(CMAKE_MODULE_PATH..`
+3. (ONLY Gnu/Linux)  add `set(CMAKE_POSITION_INDEPENDENT_CODE ON)` into IXWebsocket's CMakeLists after `set(CMAKE_MODULE_PATH..`
 4. `cd build`
 5. `cmake -DUSE_TLS=1 ..`
 6. `make -j`
