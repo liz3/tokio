@@ -120,38 +120,38 @@ void VoiceConnection::play_test() {
       r = (opus_int16)(right >> 16);
       audio_set.push_back(l);
       audio_set.push_back(r);
-      fwrite(&l, sizeof(opus_int16), 1, pFile);
-      fwrite(&r, sizeof(opus_int16), 1, pFile);
+//      fwrite(&l, sizeof(opus_int16), 1, pFile);
+//      fwrite(&r, sizeof(opus_int16), 1, pFile);
     }
     std::cout << "send\n============";
   }
-  auto iter = audio_set.begin();
-  for(int i = 0; i < audio_set.size() / 2; i++) {
-    std::cout << "in loop\n";
-    std::vector<opus_int16> part (kFrameSize * 2);
-    for(int x = 0; x < kFrameSize*2; x++) {
-      part.push_back(*iter);
-      iter++;
-    }
-    std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(part, kFrameSize);
-    std::cout << "total opus packets: " << opus_out.size() << "\n";
+  std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
     for(auto entry : opus_out) {
       int len = 0;
-
       std::cout << "Opus length: " << entry.size() << "\n";
-      unsigned char raw[1024];
+      unsigned char* raw = new unsigned char[entry.size()];
       for(unsigned char c : entry) {
         raw[len] = c;
         len++;
       }
       uint8_t * encodedAudioDataPointer = raw;
-
-      //   fwrite (raw , sizeof(unsigned char), sizeof(raw), pFile);
+//      fwrite (raw, sizeof(unsigned char), sizeof(raw), pFile);
       this->preparePacket(encodedAudioDataPointer, entry.size());
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      std::this_thread::sleep_for(std::chrono::milliseconds(17));
     }
 
-  }
+  // auto iter = audio_set.begin();
+  // for(int i = 0; i < audio_set.size() / 2; i++) {
+  //   std::cout << "in loop\n";
+  //   std::vector<opus_int16> part (kFrameSize * 2);
+  //   for(int x = 0; x < kFrameSize*2; x++) {
+  //     part.push_back(*iter);
+  //     iter++;
+  //   }
+
+  //   std::cout << "total opus packets: " << opus_out.size() << "\n";
+
+  // }
 
   fclose(pFile);
 
