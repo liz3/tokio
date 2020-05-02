@@ -6,7 +6,7 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
     setTimeout(() => {
       bot.connectVoice("98351956925349888", "410458159568650253", (result) => {
         result.addEventListener("SESSION_DEP", () => {
-          result.playFile("/Users/liz3/Downloads/smptstps.mp3")
+          result.playFile("/Users/liz3/Downloads/Nightcore_-_Silver_Lining[Youtubemp3.download].mp3")
         })
         result.addEventListener("READY", () => {
           console.log("ready fired");

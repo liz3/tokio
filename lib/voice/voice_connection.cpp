@@ -18,7 +18,7 @@ void VoiceConnection::startHeartBeat(int interval) {
 }
 void VoiceConnection::send(unsigned char buffer[], int size) {
   sendto(sockfd,buffer, sizeof(unsigned char) * size,
-        MSG_WAITALL, ( struct sockaddr *) &servaddr,
+        0, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
 }
 void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
@@ -68,10 +68,8 @@ void VoiceConnection::playFile(std::string filePath) {
     return;
   }
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, MAP_SHARED, fd, 0);
-
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
   int s = kNumChannels * kFrameSize;
-
   while (1) {
     if (mad_frame_decode(&mad_frame, &mad_stream)) {
       if (MAD_RECOVERABLE(mad_stream.error)) {
@@ -105,26 +103,19 @@ void VoiceConnection::playFile(std::string filePath) {
       audio_set.push_back(r);
     }
   }
-  std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
-    for(auto entry : opus_out) {
-      int len = 0;
-
-      unsigned char* raw = new unsigned char[entry.size()];
-      for(unsigned char c : entry) {
-        raw[len] = c;
-        len++;
-      }
-      uint8_t * encodedAudioDataPointer = raw;
-      this->preparePacket(encodedAudioDataPointer, entry.size());
-      std::this_thread::sleep_for(std::chrono::milliseconds(17));
-      delete[] raw;
-    }
-
   fclose(fp);
 
   mad_synth_finish(&mad_synth);
   mad_frame_finish(&mad_frame);
   mad_stream_finish(&mad_stream);
+
+  std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
+  for(auto entry : opus_out) {
+    uint8_t * encodedAudioDataPointer = &entry[0];
+    this->preparePacket(encodedAudioDataPointer, entry.size());
+
+    std::this_thread::sleep_for(std::chrono::microseconds(17650));
+  }
 }
 bool VoiceConnection::setupAndHandleSocket() {
   sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
