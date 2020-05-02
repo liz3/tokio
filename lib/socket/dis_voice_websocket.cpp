@@ -1,12 +1,10 @@
 
 #include "dis_voice_websocket.h"
 DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice_state, std::string& id, std::string& server_id, std::string& channel_id) {
-  std::cout <<  "  LOOL" <<  server_id <<  "\n";
   this->dis_id = id;
   this->server_id = server_id;
   this->channel_id = channel_id;
   std::string target_endpoint = "wss://"+ std::string(server_state["endpoint"]).substr(0, std::string(server_state["endpoint"]).length() -3) + "/?v=4";
-  std::cout << target_endpoint << "\n";
   this->webSocket.setUrl(target_endpoint);
   this->session_id = voice_state["session_id"];
   this->webSocket.disablePerMessageDeflate();
@@ -14,8 +12,6 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
   this->token = server_state["token"];
   zlib_ctx = std::make_unique<zstr::istream>(message_stream);
   auto finalThis = this;
-  std::cout << "reached callback\n";
-
   webSocket.setOnMessageCallback([finalThis](const ix::WebSocketMessagePtr& msg)
                                  {
                                    if(msg->type == ix::WebSocketMessageType::Error) {
@@ -48,12 +44,6 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
                                    finalThis->messageHandler(std::move(payload));
                                  }
     );
-
-
-  //  this->webSocket.setPingInterval(45);
-    this->webSocket.start();
-    this->running = true;
-
 }
 void DisVoiceWebsocket::close() {
   if(!this->running) return;
@@ -72,7 +62,6 @@ void DisVoiceWebsocket::sendMessage(int opcode, json data) {
 }
 void DisVoiceWebsocket::connect() {
   if(this->running) return;
-  this->webSocket.setPingInterval(45);
   this->webSocket.start();
   this->running = true;
 }
@@ -101,7 +90,6 @@ void DisVoiceWebsocket::handleAuth() {
   data["server_id"] = this->server_id;
   data["user_id"] = this->dis_id;
   data["session_id"] = this->session_id;
-  std::cout << "sending authenticate: " << data.dump() << "\n";
   this->sendMessage(0, data);
 }
 void DisVoiceWebsocket::updateSpeakingState(bool speaking) {
@@ -111,8 +99,16 @@ void DisVoiceWebsocket::updateSpeakingState(bool speaking) {
   status["ssrc"] = this->ssrc;
   this->sendMessage(5, status);
 }
+void DisVoiceWebsocket::playFile(std::string& path) {
+  if(!this->running || this->voiceConn == nullptr) return;
+  auto finalThis = this;
+  finalThis->updateSpeakingState(true);
+  std::thread t([finalThis, path](){
+                  finalThis->voiceConn->playFile(std::move(path));
+                });
+  t.detach();
+}
 void DisVoiceWebsocket::messageHandler(const std::string& msg) {
-
     this->seq++;
     auto parsed = json::parse(msg);
     int messageOpCode = parsed["op"];
@@ -120,15 +116,12 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
     case 2:
     case 4:
     case 5: {
-       if(messageOpCode ==2) {
-         std::cout << "received ready!!\n";
-         std::cout <<  msg << "\n";
-
+       if(messageOpCode == 2) {
          auto data = parsed["d"];
          this->ssrc = data["ssrc"];
          this->port = data["port"];
          this->ip = data["ip"];
-         if(this->voiceConn == nullptr) {
+                  if(this->voiceConn == nullptr) {
            this->voiceConn = new VoiceConnection(this->ip, this->port, this->ssrc);
            if(this->voiceConn->setupAndHandleSocket()) {
              json f;
@@ -147,12 +140,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
              this->sendMessage(12, meta);
            }
          }
-         return;
-       }
-       if(messageOpCode == 4) {
-         std::cout << "received auth confirm!!\n";
-         std::cout <<  msg << "\n";
-         // ready with key
+       } else if(messageOpCode == 4) {
          this->voiceConn->startHeartBeat(this->heart_beat_interval);
          json token = parsed["d"]["secret_key"];
          std::vector<unsigned char> key;
@@ -160,21 +148,17 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
           key.push_back(token[i].get<unsigned char>() & 0xFF);
          }
          this->voiceConn->key = key;
-
-       //  std::cout << std::string(key) << "\n";
-       //   this->voiceConn->key = key;
-         auto finalThis = this;
-           std::thread t([finalThis](){
-                           std::cout << "starting offthread\n";
-                           finalThis->updateSpeakingState(true);
-                           finalThis->voiceConn->play_test();
-                         });
-           t.detach();
-           return;
        }
-       if (parsed["t"].is_string()) {
-         std::string evstr = std::string(parsed["t"]);
-        for(auto listener : event_handlers) {
+
+       std::string evstr = "";
+       if (messageOpCode == 2) {
+         evstr = "READY";
+       } else if (messageOpCode == 4) {
+         evstr = "SESSION_DEP";
+       } else {
+         evstr = "GENERIC";
+       }
+       for(auto listener : event_handlers) {
           if(evstr.compare(listener.evName) == 0) {
               auto callback = [msg]( Napi::Env env, Napi::Function jsCallback) {
 
@@ -184,13 +168,12 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
                                 Napi::Object asObject = val.As<Napi::Object>();
                                 auto obj = asObject.Get("d").As<Napi::Object>();
                                 jsCallback.Call({ obj } );
-            };
+                              };
             auto status = listener.function.BlockingCall( callback );
               if(status != napi_ok) {
                 std::cout << "not ok\n";
               }
           }
-        }
       }
       break;
     }
@@ -202,10 +185,8 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
       this->running = true;
       int interval = parsed["d"]["heartbeat_interval"];
       heart_beat_interval = interval;
-
       std::thread second (DisVoiceWebsocket::setupHeartBeatInterval,this, interval);
       second.detach();
-
       break;
     }
     }

@@ -25,6 +25,8 @@ public:
   void stop();
   void externalClose(const Napi::CallbackInfo& info);
   void registerEventListener(std::string& name, Napi::Function callback);
+  VoiceConnection* voiceConn = nullptr;
+  void playFile(std::string& path);
 private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
@@ -49,7 +51,6 @@ private:
   std::string dis_id;
   std::string server_id;
   std::string channel_id;
-  VoiceConnection* voiceConn = nullptr;
   int heart_beat_interval = 0;
 };
 #endif

@@ -4,8 +4,14 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
   bot.addEventListener("READY", data => {
     console.log("ready received");
     setTimeout(() => {
-      bot.connectVoice("98351956925349888", "410458159568650253", () => {
-
+      bot.connectVoice("98351956925349888", "410458159568650253", (result) => {
+        result.addEventListener("SESSION_DEP", () => {
+          result.playFile("/Users/liz3/Downloads/smptstps.mp3")
+        })
+        result.addEventListener("READY", () => {
+          console.log("ready fired");
+        })
+        result.connect();
       });
     }, 450);
   });

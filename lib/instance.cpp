@@ -43,33 +43,54 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                 socket->connect();
                                               }
       ));
-  obj.Set("playBackTest", Napi::Function::New(env, [finalThis](const Napi::CallbackInfo& info) {
-                                                     std::cout << "test";
-                                                     if (info.Length() != 1) {
-                                                       Napi::TypeError::New(info.Env(), "Wrong number of arguments")
-                                                         .ThrowAsJavaScriptException();
-                                                       return;
-                                                     }
-                                                     std::string file  = info[0].As<Napi::String>().Utf8Value();
-
-                                                   }
-      ));
   return obj;
 }
 void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std::string& server_id, std::string& channel_id, DisWebsocket* sock, DisVoiceWebsocket* vc_socket) {
-  //TODO create thread safe function for callback
   if(vc_socket != nullptr) {
 
-    //TODO handle
-//    return;
+    return;
   }
+  auto ref = Napi::Persistent(callback);
+  auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Audio creation callback", 0, 1);
 
- //  std::cout << server_id << "\n";
-  sock->handleVoiceInit(server_id, channel_id, [vc_socket, sock, server_id, channel_id](const json& server_state, const json& voice_state) mutable {
-
-                                             //    std::cout << server_state.dump() << "\n\n" << voice_state.dump() << "\n";
+  sock->handleVoiceInit(server_id, channel_id, [vc_socket, sock, server_id, channel_id, tsfn](const json& server_state, const json& voice_state) mutable {
                                                  vc_socket = new DisVoiceWebsocket(server_state, voice_state, sock->own_id, server_id, channel_id);
+                                                 auto callback = []( Napi::Env env, Napi::Function jsCallback, DisVoiceWebsocket* socket) {
+                                                                   Napi::Object obj = Napi::Object::New(env);
+                                                                     obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                   socket->connect();
+                                                                                                                 }
+                                                                         ));
+                                                                     obj.Set("addEventListener", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                            auto env = info.Env();
+                                                                                                                            if (info.Length() != 2) {
+                                                                                                                              Napi::TypeError::New(env, "Wrong number of arguments")
+                                                                                                                                .ThrowAsJavaScriptException();
+                                                                                                                              return;
+                                                                                                                            }
+                                                                                                                            std::string eventName = info[0].As<Napi::String>().Utf8Value();
+                                                                                                                            Napi::Function callback = info[1].As<Napi::Function>();
+                                                                                                                            socket->registerEventListener(eventName, callback);
+                                                                                                                          }
+                                                                         ));
+                                                                     obj.Set("playFile", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                    auto env = info.Env();
+                                                                                                                    if (info.Length() != 1) {
+                                                                                                                      Napi::TypeError::New(env, "Wrong number of arguments")
+                                                                                                                        .ThrowAsJavaScriptException();
+                                                                                                                      return;
+                                                                                                                    }
+                                                                                                                    std::string path = info[0].As<Napi::String>().Utf8Value();
+                                                                                                                    socket->playFile(path);
+                                                                                                                  }
+                                                                         ));
 
+                                                                     jsCallback.Call({ obj } );
+                                                                 };
+                                                 auto status = tsfn.BlockingCall( vc_socket, callback );
+                                                 if(status != napi_ok) {
+                                                   std::cout << "not ok\n";
+                                                 }
                                                });
 }
 

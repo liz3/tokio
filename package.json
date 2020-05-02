@@ -1,15 +1,16 @@
 {
   "name": "dis-light",
   "version": "1.0.0",
-  "description": "C library for high performance discord audio trhoughput",
+  "description": "C++ library for high performance discord audio trhoughput",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "cmake-js compile && node index.js"
+    "start": "cmake-js compile && node index.js",
+    "compile": "cmake-js compile"
   },
   "keywords": [
     "discord",
-    "c",
+    "c++",
     "fast"
   ],
   "author": "Liz3",

@@ -20,6 +20,9 @@
 #include <mad.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#ifndef __APPLE__
+#include <cstring>
+#endif
 constexpr auto kFrameSize = 960;
 constexpr auto kNumChannels = 2;
 constexpr auto kSampleRate = 48000;
@@ -61,8 +64,8 @@ class VoiceConnection {
   VoiceConnection(std::string& address, int port, int ssrc);
   static short getShortBigEndian(char arr[], int offset)
   {
-    return (short) ((arr[offset    ] & 0xff) << 8
-                    | arr[offset + 1] & 0xff);
+    return (short) ((arr[offset    ] & 0xff << 8)
+                    | (arr[offset + 1] & 0xff));
   };
   static void setIntBigEndian(unsigned char arr[], int offset, int it)
     {
@@ -108,7 +111,7 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
   void send(unsigned char buffer[], int size);
   std::vector<unsigned char> key;
   int keyLength = 0;
-  void play_test();
+  void playFile(std::string filePath);
 
 };
 

@@ -2,7 +2,9 @@
 #define DIS_LIGHT_VOICE_STRING_UTILS_H
 
 #include <string>
-
+#ifndef __APPLE__
+#include <algorithm>
+#endif
 static inline void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
         return !std::isspace(ch);
