@@ -78,7 +78,7 @@ void DisVoiceWebsocket::connect() {
 }
 void DisVoiceWebsocket::sendHeartBeat() {
   json f;
-  f["op"] = 1;
+  f["op"] = 3;
   f["d"] = this->seq;
   this->webSocket.send(f.dump());
 }
