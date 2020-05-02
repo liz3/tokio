@@ -49,7 +49,7 @@ void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
 	crypto_secretbox_easy(audioDataPacket.data() + sizeof header,
                         encodedAudioData, len, nonce, &key[0]);
   this->send(audioDataPacket.data(), audioDataPacket.size());
-  timestamp += len * 2;
+  timestamp += kFrameSize;
 }
 void VoiceConnection::play_test() {
 //  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
@@ -120,26 +120,26 @@ void VoiceConnection::play_test() {
       r = (opus_int16)(right >> 16);
       audio_set.push_back(l);
       audio_set.push_back(r);
-   //   fwrite(&l, sizeof(opus_int16), 1, pFile);
-   //   fwrite(&r, sizeof(opus_int16), 1, pFile);
+      fwrite(&l, sizeof(opus_int16), 1, pFile);
+      fwrite(&r, sizeof(opus_int16), 1, pFile);
     }
     std::cout << "send\n============";
   }
   auto iter = audio_set.begin();
-  for(int i = 0; i < (audio_set.size() / (2 * kFrameSize)); i++) {
+  for(int i = 0; i < audio_set.size() / 2; i++) {
     std::cout << "in loop\n";
-    std::vector<opus_int16> part (2 * kFrameSize);
-    for(int x = 0; x < 4 * kFrameSize; x++) {
+    std::vector<opus_int16> part (kFrameSize * 2);
+    for(int x = 0; x < kFrameSize*2; x++) {
       part.push_back(*iter);
       iter++;
     }
-    std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(part, kFrameSize * 2);
+    std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(part, kFrameSize);
     std::cout << "total opus packets: " << opus_out.size() << "\n";
     for(auto entry : opus_out) {
       int len = 0;
 
       std::cout << "Opus length: " << entry.size() << "\n";
-      unsigned char raw[11024];
+      unsigned char raw[1024];
       for(unsigned char c : entry) {
         raw[len] = c;
         len++;
@@ -148,7 +148,7 @@ void VoiceConnection::play_test() {
 
       //   fwrite (raw , sizeof(unsigned char), sizeof(raw), pFile);
       this->preparePacket(encodedAudioDataPointer, entry.size());
-      std::this_thread::sleep_for(std::chrono::milliseconds( 1000 * ( (audio_set.size() / (2 * kFrameSize)) / (48000 * 2))));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 
   }

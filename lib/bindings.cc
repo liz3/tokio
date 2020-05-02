@@ -4,7 +4,6 @@
 #include <ixwebsocket/IXNetSystem.h>
 #include <nlohmann/json.hpp>
 #include <unistd.h>
-#include <libavcodec/avcodec.h>
 
 
 static void init(const Napi::CallbackInfo& info) {

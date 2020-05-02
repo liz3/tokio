@@ -11,7 +11,7 @@ add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC} lib/instance.
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
 find_package(nlohmann_json 3.2.0 REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE opus IXWebSocket nlohmann_json::nlohmann_json sodium mad m avcodec avutil avformat avresample)
+target_link_libraries(${PROJECT_NAME} PRIVATE opus IXWebSocket nlohmann_json::nlohmann_json sodium mad m)
 # Include N-API wrappers
 execute_process(COMMAND node -p "require('node-addon-api').include"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
