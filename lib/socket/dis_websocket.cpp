@@ -17,7 +17,6 @@ DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto
                                      return;
 
                                    if(!msg->binary) {
-                                     std::cout << "received non binary message\n";
                                      finalThis->messageHandler(std::move(msg->str));
                                      return;
                                    }
@@ -87,7 +86,6 @@ void DisWebsocket::handleVoiceInit(std::string& server_id, std::string& channel_
   if(waitingVoiceConnect) return;
   voiceInitCallback = cb;
   waitingVoiceConnect = true;
-    std::cout << "reached test\n";
 
   json init_obj;
   init_obj["guild_id"] = server_id;

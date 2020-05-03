@@ -137,7 +137,6 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
              data["port"] = this->voiceConn->own_port;
              data["mode"] = "xsalsa20_poly1305";
              f["data"] = data;
-             std::cout << "sending auth message" <<  f.dump() << "\n";
              this->sendMessage(1, f);
              json meta;
              meta["audio_ssrc"] = this->ssrc;

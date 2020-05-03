@@ -11,10 +11,7 @@ VoiceConnection::VoiceConnection(std::string& address, int port, int ssrc) : enc
 void VoiceConnection::startHeartBeat(int interval) {
   auto finalThis = this;
   std::thread t([interval, finalThis](){
-                  std::cout << "in keepalive thread\n";
                   while(finalThis->running) {
-                    std::cout << "sending keep alive\n";
-
                     unsigned char buff[] = {(unsigned char)0xC9, 0, 0, 0, 0, 0, 0, 0, 0};
                     finalThis->send(buff, 9);
                     std::this_thread::sleep_for(std::chrono::milliseconds(interval));
@@ -126,7 +123,7 @@ void VoiceConnection::playFile(std::string filePath) {
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-    std::this_thread::sleep_for(std::chrono::microseconds(18000-sendTime-extraBuffer));
+    std::this_thread::sleep_for(std::chrono::microseconds(17700-sendTime-extraBuffer));
 //    std::this_thread::sleep_for(std::chrono::microseconds(17000));
   }
 }
@@ -153,7 +150,7 @@ void VoiceConnection::playOpusFile(std::string filePath) {
       std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
       sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 //      std::this_thread::sleep_for(std::chrono::microseconds(18000));
-    std::this_thread::sleep_for(std::chrono::microseconds(18000-sendTime-extraBuffer));
+    std::this_thread::sleep_for(std::chrono::microseconds(17700-sendTime-extraBuffer));
     }
     delete[] buff;
   }
