@@ -126,8 +126,8 @@ void VoiceConnection::playFile(std::string filePath) {
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
     sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-//    std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
-    std::this_thread::sleep_for(std::chrono::microseconds(17000));
+    std::this_thread::sleep_for(std::chrono::microseconds(18000-sendTime-extraBuffer));
+//    std::this_thread::sleep_for(std::chrono::microseconds(17000));
   }
 }
 void VoiceConnection::playOpusFile(std::string filePath) {
@@ -152,8 +152,8 @@ void VoiceConnection::playOpusFile(std::string filePath) {
       this->preparePacket(encodedAudioDataPointer, entry.size());
       std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
       sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-      std::this_thread::sleep_for(std::chrono::microseconds(17000));
-//    std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
+//      std::this_thread::sleep_for(std::chrono::microseconds(18000));
+    std::this_thread::sleep_for(std::chrono::microseconds(18000-sendTime-extraBuffer));
     }
     delete[] buff;
   }
