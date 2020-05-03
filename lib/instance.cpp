@@ -81,9 +81,21 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
                                                                                                                       return;
                                                                                                                     }
                                                                                                                     std::string path = info[0].As<Napi::String>().Utf8Value();
-                                                                                                                    socket->playFile(path);
+                                                                                                                    socket->playFile(path, "mpeg");
                                                                                                                   }
                                                                          ));
+                                                                     obj.Set("playOpusFile", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                    auto env = info.Env();
+                                                                                                                    if (info.Length() != 1) {
+                                                                                                                      Napi::TypeError::New(env, "Wrong number of arguments")
+                                                                                                                        .ThrowAsJavaScriptException();
+                                                                                                                      return;
+                                                                                                                    }
+                                                                                                                    std::string path = info[0].As<Napi::String>().Utf8Value();
+                                                                                                                    socket->playFile(path, "opus");
+                                                                                                                  }
+                                                                         ));
+
 
                                                                      jsCallback.Call({ obj } );
                                                                  };

@@ -26,7 +26,7 @@ public:
   void externalClose(const Napi::CallbackInfo& info);
   void registerEventListener(std::string& name, Napi::Function callback);
   VoiceConnection* voiceConn = nullptr;
-  void playFile(std::string& path);
+  void playFile(std::string& path, std::string type);
 private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;

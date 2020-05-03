@@ -12,10 +12,10 @@ C++ Discord library with node frontend
 ## Native deps
 Install native dependencies
 ### macOS
-`brew install mad libsodium opus nlohmann-json`
+`brew install mad libsodium opus opusfile nlohmann-json`
 ### Gnu/Linux
 (This is applied to apt using distros, but should work on all, tested in ubuntu 19.10 docker container)
-`apt install nlohmann-json3-dev libmad0-dev libsodium-dev libopus-dev`
+`apt install nlohmann-json3-dev libmad0-dev libsodium-dev libopus-dev libopusfile-dev`
 
 ## building ixwebsocket
 
@@ -42,3 +42,4 @@ After building Simple start the `index.js` with node.
 - opus
 - mad
 - sodium
+- opusfile

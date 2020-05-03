@@ -1,12 +1,19 @@
 const dis_light = require("bindings")("dis_light");
 dis_light.init(process.env.TOKEN, (err, bot) => {
-
   bot.addEventListener("READY", data => {
     console.log("ready received");
     setTimeout(() => {
       bot.connectVoice("98351956925349888", "410458159568650253", (result) => {
         result.addEventListener("SESSION_DEP", () => {
-          result.playFile("/Users/liz3/Desktop/Aftermath - The way You Are-OnxZSjMRNY0.opus")
+          const path = process.argv[2]
+          if(path.toLowerCase().endsWith("mp3")){
+            result.playFile(process.argv[2]);
+          }else if(path.toLowerCase().endsWith("opus")) {
+            result.playOpusFile(process.argv[2])
+          } else {
+            console.log("unsupported file format");
+            return;
+          }
         })
         result.addEventListener("READY", () => {
           console.log("ready fired");
@@ -19,5 +26,4 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
     console.log("Message event", data);
   });
   bot.connect();
- // bot.playBackTest("/Users/liz3/Downloads/FILV x Beatmount - Say What You Wanna.mp3");
 });

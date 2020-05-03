@@ -113,6 +113,7 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
   std::vector<unsigned char> key;
   int keyLength = 0;
   void playFile(std::string filePath);
+  void playOpusFile(std::string filePath);
 
 };
 

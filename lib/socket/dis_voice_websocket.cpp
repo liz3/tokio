@@ -99,12 +99,18 @@ void DisVoiceWebsocket::updateSpeakingState(bool speaking) {
   status["ssrc"] = this->ssrc;
   this->sendMessage(5, status);
 }
-void DisVoiceWebsocket::playFile(std::string& path) {
+void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
   if(!this->running || this->voiceConn == nullptr) return;
   auto finalThis = this;
   finalThis->updateSpeakingState(true);
-  std::thread t([finalThis, path](){
+  std::thread t([finalThis, path, type](){
+                  if(type.compare("mpeg") == 0) {
                   finalThis->voiceConn->playFile(std::move(path));
+                  } else if(type.compare("opus") == 0) {
+                    finalThis->voiceConn->playOpusFile(std::move(path));
+                  } else {
+                    //Todo error
+                  }
                 });
   t.detach();
 }
