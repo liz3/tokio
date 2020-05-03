@@ -110,11 +110,21 @@ void VoiceConnection::playFile(std::string filePath) {
   mad_stream_finish(&mad_stream);
 
   std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
+  audio_set.clear();
+  const int extraBuffer = 100;
+  int sendTime = 0;
   for(auto entry : opus_out) {
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     uint8_t * encodedAudioDataPointer = &entry[0];
     this->preparePacket(encodedAudioDataPointer, entry.size());
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    std::this_thread::sleep_for(std::chrono::microseconds(17650));
+	std::cout << "Time difference = " << sendTime << "[µs]" << std::endl;
+	
+	sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+
+	
+    std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
   }
 }
 bool VoiceConnection::setupAndHandleSocket() {
