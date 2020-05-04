@@ -20,7 +20,7 @@
 #include <mad.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <opusfile.h>
+#include <opus/opusfile.h>
 #ifndef __APPLE__
 #include <cstring>
 #endif
