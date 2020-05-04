@@ -109,14 +109,16 @@ void VoiceConnection::playFile(std::string filePath) {
       --s;
       if(s == 0 || sample_len<0) {
 
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
         std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
         auto entry = opus_out[0];
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         uint8_t * encodedAudioDataPointer = &entry[0];
         this->preparePacket(encodedAudioDataPointer, entry.size());
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+		
         #ifdef __APPLE__
         std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
         #else
