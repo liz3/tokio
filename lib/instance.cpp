@@ -52,10 +52,10 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
   }
   auto ref = Napi::Persistent(callback);
   auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Audio creation callback", 0, 1);
-
-  sock->handleVoiceInit(server_id, channel_id, [vc_socket, sock, server_id, channel_id, tsfn](const json& server_state, const json& voice_state) mutable {
+  auto finalThis = this;
+  sock->handleVoiceInit(server_id, channel_id, [vc_socket, sock, server_id, channel_id, tsfn, finalThis](const json& server_state, const json& voice_state) mutable {
                                                  vc_socket = new DisVoiceWebsocket(server_state, voice_state, sock->own_id, server_id, channel_id);
-                                                 auto callback = []( Napi::Env env, Napi::Function jsCallback, DisVoiceWebsocket* socket) {
+                                                 auto callback = [finalThis, sock]( Napi::Env env, Napi::Function jsCallback, DisVoiceWebsocket* socket) {
                                                                    Napi::Object obj = Napi::Object::New(env);
                                                                      obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
                                                                                                                    socket->connect();
@@ -96,7 +96,16 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
                                                                                                                   }
                                                                          ));
 
-
+                                                                     obj.Set("stop", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                socket->handleStop();
+                                                                                                                  }
+                                                                         ));
+                                                                     obj.Set("disconnect", Napi::Function::New(env, [socket, finalThis, sock](const Napi::CallbackInfo& info) {
+                                                                                                                socket->handleDisconnect();
+                                                                                                                sock->handleVoiceLeave();
+                                                                                                                finalThis->voice_sock = nullptr;
+                                                                                                                    }
+                                                                         ));
                                                                      jsCallback.Call({ obj } );
                                                                  };
                                                  auto status = tsfn.BlockingCall( vc_socket, callback );

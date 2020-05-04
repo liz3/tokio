@@ -8,6 +8,7 @@
 #include <thread>         // std::thread
 #include <chrono>
 #include <string>
+#include <unistd.h>
 #include <optional>
 #include "zlib.h"
 #include "zconf.h"
@@ -27,6 +28,8 @@ public:
   void registerEventListener(std::string& name, Napi::Function callback);
   VoiceConnection* voiceConn = nullptr;
   void playFile(std::string& path, std::string type);
+  void handleStop();
+  void handleDisconnect();
 private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
@@ -52,5 +55,7 @@ private:
   std::string server_id;
   std::string channel_id;
   int heart_beat_interval = 0;
+  bool playing = false;
+
 };
 #endif

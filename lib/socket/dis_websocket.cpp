@@ -96,6 +96,17 @@ void DisWebsocket::handleVoiceInit(std::string& server_id, std::string& channel_
   sendMessage(4, init_obj);
 
 }
+void DisWebsocket::handleVoiceLeave() {
+  json init_obj;
+  init_obj["guild_id"] = "";
+  init_obj["channel_id"] = "";
+  init_obj["self_mute"] = false;
+  init_obj["self_deaf"] = false;
+  init_obj["self_video"] = false;
+  sendMessage(4, init_obj);
+
+}
+
 void DisWebsocket::handleAuth() {
   json props;
   props["os"] = "Linux";

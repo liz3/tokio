@@ -4,6 +4,9 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
     console.log("ready received");
     setTimeout(() => {
       bot.connectVoice("98351956925349888", "410458159568650253", (result) => {
+        result.addEventListener("FINISH_PLAY", () => {
+          result.disconnect();
+        })
         result.addEventListener("SESSION_DEP", () => {
           const path = process.argv[2]
           if(path.toLowerCase().endsWith("mp3")){

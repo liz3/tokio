@@ -27,6 +27,7 @@ public:
   void registerEventListener(std::string& name, Napi::Function callback);
   void handleVoiceInit(std::string& server_id, std::string& channel_id, const VoiceInitCallback& cb);
   std::string own_id;
+  void handleVoiceLeave();
 private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;

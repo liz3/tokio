@@ -95,15 +95,21 @@ void DisVoiceWebsocket::handleAuth() {
 void DisVoiceWebsocket::updateSpeakingState(bool speaking) {
   json status;
   status["speaking"] = speaking ? 1 : 0;
-  status["delay"] = 0;
+  status["delay"] = 20;
   status["ssrc"] = this->ssrc;
   this->sendMessage(5, status);
 }
 void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
-  if(!this->running || this->voiceConn == nullptr) return;
+  if(!this->running || this->voiceConn == nullptr || this->playing) return;
+  if( access(path.c_str(), F_OK ) != -1 ) {
+    // file exists
+  } else {
+    return;
+  }
   auto finalThis = this;
   finalThis->updateSpeakingState(true);
   std::thread t([finalThis, path, type](){
+                  finalThis->playing = true;
                   if(type.compare("mpeg") == 0) {
                   finalThis->voiceConn->playFile(std::move(path));
                   } else if(type.compare("opus") == 0) {
@@ -111,14 +117,33 @@ void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
                   } else {
                     //Todo error
                   }
+                  finalThis->playing = false;
+                  json f;
+                  f["op"] = -1;
+                  f["d"] = "{}";
+                  finalThis->messageHandler(f.dump());
                 });
   t.detach();
+}
+void DisVoiceWebsocket::handleStop() {
+  if(!this->running || this->voiceConn == nullptr || !this->playing) return;
+  this->voiceConn->interuptFlag = true;
+  this->playing = false;
+  this->updateSpeakingState(false);
+
+}
+void DisVoiceWebsocket::handleDisconnect() {
+  if(this->playing) this->handleStop();
+  if(this->voiceConn != nullptr) this->voiceConn->running = false;
+  this->running = false;
+  this->webSocket.close();
 }
 void DisVoiceWebsocket::messageHandler(const std::string& msg) {
     this->seq++;
     auto parsed = json::parse(msg);
     int messageOpCode = parsed["op"];
     switch(messageOpCode) {
+    case -1:
     case 2:
     case 4:
     case 5: {
@@ -127,7 +152,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
          this->ssrc = data["ssrc"];
          this->port = data["port"];
          this->ip = data["ip"];
-                  if(this->voiceConn == nullptr) {
+         if(this->voiceConn == nullptr) {
            this->voiceConn = new VoiceConnection(this->ip, this->port, this->ssrc);
            if(this->voiceConn->setupAndHandleSocket()) {
              json f;
@@ -163,6 +188,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
        } else {
          evstr = "GENERIC";
        }
+       if(messageOpCode == -1) evstr = "FINISH_PLAY";
        for(auto listener : event_handlers) {
           if(evstr.compare(listener.evName) == 0) {
               auto callback = [msg]( Napi::Env env, Napi::Function jsCallback) {

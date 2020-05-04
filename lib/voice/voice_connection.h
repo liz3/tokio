@@ -16,7 +16,6 @@
 #include <thread>
 #include <chrono>
 #include <sodium.h>
-#include <sodium/crypto_stream_xsalsa20.h>
 #include <mad.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -30,7 +29,7 @@ constexpr auto kSampleRate = 48000;
 class VoiceConnection {
  private:
   bool ready = false;
-  bool running = true;
+
   opus::Encoder encoder;
   std::string& address;
   int port;
@@ -114,7 +113,8 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
   int keyLength = 0;
   void playFile(std::string filePath);
   void playOpusFile(std::string filePath);
-
+  bool interuptFlag = false;
+  bool running = true;
 };
 
 #endif
