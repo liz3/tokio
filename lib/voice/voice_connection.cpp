@@ -72,7 +72,9 @@ void VoiceConnection::playFile(std::string filePath) {
   }
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, MAP_SHARED, fd, 0);
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
-  int s = kNumChannels * kFrameSize;
+  int s = kFrameSize;
+  const int extraBuffer = 100;
+  int sendTime = 0;
   while (1) {
     if (mad_frame_decode(&mad_frame, &mad_stream)) {
       if (MAD_RECOVERABLE(mad_stream.error)) {
@@ -104,6 +106,26 @@ void VoiceConnection::playFile(std::string filePath) {
       r = (opus_int16)(right >> 16);
       audio_set.push_back(l);
       audio_set.push_back(r);
+      --s;
+      if(s == 0 || sample_len<0) {
+
+        std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
+        auto entry = opus_out[0];
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        uint8_t * encodedAudioDataPointer = &entry[0];
+        this->preparePacket(encodedAudioDataPointer, entry.size());
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+        sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+        #ifdef __APPLE__
+        std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
+        #else
+        std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
+        #endif
+
+        s = kFrameSize;
+        audio_set.clear();
+      }
     }
   }
   fclose(fp);
@@ -111,21 +133,6 @@ void VoiceConnection::playFile(std::string filePath) {
   mad_synth_finish(&mad_synth);
   mad_frame_finish(&mad_frame);
   mad_stream_finish(&mad_stream);
-
-  std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
-  audio_set.clear();
-  const int extraBuffer = 100;
-  int sendTime = 0;
-  for(auto entry : opus_out) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    uint8_t * encodedAudioDataPointer = &entry[0];
-    this->preparePacket(encodedAudioDataPointer, entry.size());
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-    sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-    std::this_thread::sleep_for(std::chrono::microseconds(17700-sendTime-extraBuffer));
-//    std::this_thread::sleep_for(std::chrono::microseconds(17000));
-  }
 }
 void VoiceConnection::playOpusFile(std::string filePath) {
 
