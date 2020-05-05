@@ -17,16 +17,8 @@ Install native dependencies
 (This is applied to apt using distros, but should work on all, tested in ubuntu 19.10 docker container)
 `apt install nlohmann-json3-dev libmad0-dev libsodium-dev libopus-dev libopusfile-dev`
 
-## building ixwebsocket
-
-1. `git clone https://github.com/machinezone/IXWebSocket`
-2. `cd IXWebSocket && mkdir build`
-3. (ONLY Gnu/Linux)  add `set(CMAKE_POSITION_INDEPENDENT_CODE ON)` into IXWebsocket's CMakeLists after `set(CMAKE_MODULE_PATH..`
-4. `cd build`
-5. `cmake -DUSE_TLS=1 ..`
-6. `make -j`
-7. `(sudo) make install`
-
+## Setup
+Simply Run: `./setup.sh`
 ## Building
 1. `npm install`
 2. `npm run compile`
