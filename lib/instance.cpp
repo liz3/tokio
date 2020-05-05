@@ -1,9 +1,10 @@
 #include "instance.h"
 using json = nlohmann::json;
-Instance::Instance(std::string token) {
+Instance::Instance(std::string& token) {
   this->token = token;
 }
 Napi::Object Instance::generateBindings(Napi::Env env) {
+  auto token = this->token;
   Napi::Object obj = Napi::Object::New(env);
   auto socket = this->socket;
   auto vc_socket = this->voice_sock;
@@ -38,7 +39,37 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                          finalThis->generateVoiceBindings(tEnv, callback, server_id, channel_id,socket, vc_socket);
                                               }
       ));
-  obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+  obj.Set("sendChannelMessage", Napi::Function::New(env, [finalThis, token](const Napi::CallbackInfo& info) {
+                                                           if (info.Length() != 3) {
+                                                             Napi::TypeError::New(info.Env(), "Wrong number of arguments")
+                                                               .ThrowAsJavaScriptException();
+                                                             return;
+                                                           }
+                                                           std::string channel_id = info[0].As<Napi::String>().Utf8Value();
+                                                           std::string message = info[1].As<Napi::String>().Utf8Value();
+                                                           Napi::Function callback = info[2].As<Napi::Function>();
+
+                                                           discord_send_text_message_async(token, channel_id, message, callback);
+
+                                              }
+      ));
+ obj.Set("editChannelMessage", Napi::Function::New(env, [finalThis, token](const Napi::CallbackInfo& info) {
+                                                           if (info.Length() != 4) {
+                                                             Napi::TypeError::New(info.Env(), "Wrong number of arguments")
+                                                               .ThrowAsJavaScriptException();
+                                                             return;
+                                                           }
+                                                           std::string channel_id = info[0].As<Napi::String>().Utf8Value();
+                                                           std::string message_id = info[1].As<Napi::String>().Utf8Value();
+                                                           std::string message = info[2].As<Napi::String>().Utf8Value();
+                                                           Napi::Function callback = info[3].As<Napi::Function>();
+
+                                                           discord_edit_text_message_async(token, channel_id, message_id, message, callback);
+
+                                              }
+      ));
+
+ obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
 
                                                 socket->connect();
                                               }

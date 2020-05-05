@@ -26,7 +26,14 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
                                      return;
 
                                    if(!msg->binary) {
-                                     finalThis->messageHandler(std::move(msg->str));
+                                     json data = json::parse(msg->str);
+                                     int opCode = data["op"];
+                                     if(data.count("d") == 1)
+                                       finalThis->messageHandler(opCode, data["d"], msg->str);
+                                     else {
+                                       json placeholder;
+                                       finalThis->messageHandler(opCode, placeholder, msg->str);
+                                     }
                                      return;
                                    }
                                    std::string payload;
@@ -41,7 +48,14 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
                                      ss << s;
                                    ss << '\0';
                                    payload = ss.str();
-                                   finalThis->messageHandler(std::move(payload));
+                                   json data = json::parse(payload);
+                                   int opCode = data["op"];
+                                   if(data.count("d") == 1)
+                                     finalThis->messageHandler(opCode, data["d"], msg->str);
+                                   else {
+                                     json placeholder;
+                                     finalThis->messageHandler(opCode, placeholder, msg->str);
+                                   }
                                  }
     );
 }
@@ -119,9 +133,7 @@ void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
                   }
                   finalThis->playing = false;
                   json f;
-                  f["op"] = -1;
-                  f["d"] = "{}";
-                  finalThis->messageHandler(f.dump());
+                  finalThis->messageHandler(-1, f, "");
                 });
   t.detach();
 }
@@ -138,17 +150,14 @@ void DisVoiceWebsocket::handleDisconnect() {
   this->running = false;
   this->webSocket.close();
 }
-void DisVoiceWebsocket::messageHandler(const std::string& msg) {
-    this->seq++;
-    auto parsed = json::parse(msg);
-    int messageOpCode = parsed["op"];
+void DisVoiceWebsocket::messageHandler(int messageOpCode, json data, const std::string& msg) {
+  if(messageOpCode >= 0) this->seq++;
     switch(messageOpCode) {
     case -1:
     case 2:
     case 4:
     case 5: {
        if(messageOpCode == 2) {
-         auto data = parsed["d"];
          this->ssrc = data["ssrc"];
          this->port = data["port"];
          this->ip = data["ip"];
@@ -172,7 +181,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
          }
        } else if(messageOpCode == 4) {
          this->voiceConn->startHeartBeat(this->heart_beat_interval);
-         json token = parsed["d"]["secret_key"];
+         json token = data["secret_key"];
          std::vector<unsigned char> key;
          for(int i = 0; i < token.size(); i++)  {
           key.push_back(token[i].get<unsigned char>() & 0xFF);
@@ -191,8 +200,12 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
        if(messageOpCode == -1) evstr = "FINISH_PLAY";
        for(auto listener : event_handlers) {
           if(evstr.compare(listener.evName) == 0) {
-              auto callback = [msg]( Napi::Env env, Napi::Function jsCallback) {
-
+              auto callback = [msg, messageOpCode]( Napi::Env env, Napi::Function jsCallback) {
+                                if(messageOpCode < 0) {
+                                  auto ph = Napi::Object::New(env);
+                                  jsCallback.Call({ ph });
+                                  return;
+                                }
                                 Napi::Object global = env.Global().As<Napi::Object>();
                                 Napi::Function parseFunc = global.Get("JSON").As<Napi::Object>().Get("parse").As<Napi::Function>();
                                 Napi::Value val = parseFunc.Call(env.Global(), {Napi::String::New(parseFunc.Env(), msg.c_str())});
@@ -214,7 +227,7 @@ void DisVoiceWebsocket::messageHandler(const std::string& msg) {
     }
     case 8: {
       this->running = true;
-      int interval = parsed["d"]["heartbeat_interval"];
+      int interval = data["heartbeat_interval"];
       heart_beat_interval = interval;
       std::thread second (DisVoiceWebsocket::setupHeartBeatInterval,this, interval);
       second.detach();

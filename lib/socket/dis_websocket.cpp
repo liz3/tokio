@@ -163,9 +163,9 @@ void DisWebsocket::messageHandler(const std::string& msg) {
                                 jsCallback.Call({ obj } );
             };
             auto status = listener.function.BlockingCall( callback );
-              if(status != napi_ok) {
-                std::cout << "not ok\n";
-              }
+            if(status != napi_ok) {
+              std::cout << "not ok\n";
+            }
           }
         }
       }

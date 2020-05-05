@@ -34,7 +34,7 @@ private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
   ix::WebSocket webSocket;
-  void messageHandler(const std::string& msg);
+  void messageHandler(int messageOpCode, json data, const std::string& msg);
   void close();
   void sendMessage(int opcode, json data);
   void sendHeartBeat();

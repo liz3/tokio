@@ -24,9 +24,14 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
         result.connect();
       });
     }, 450);
+    setTimeout(() => {
+      bot.editChannelMessage("520592905937616926","707211747886366831", JSON.stringify({ content: "Edited Message"}), (success, data) => {
+      console.log(success, data);
+    })
+    }, 500)
   });
   bot.addEventListener("MESSAGE_CREATE", function (data){
-    console.log("Message event", data);
+  //  console.log("Message event", data);
   });
   bot.connect();
 });
