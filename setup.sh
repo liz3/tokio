@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 git submodule update --init
 cd IXWebSocket
 mkdir build && cd build
