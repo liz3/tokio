@@ -4,9 +4,8 @@
   "description": "C++ library for high performance discord audio trhoughput",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "cmake-js compile && node index.js",
-    "compile": "cmake-js compile"
+    "compile": "cd bindings && tsc && cd .. && cmake-js compile"
   },
   "keywords": [
     "discord",
@@ -14,9 +13,29 @@
     "fast"
   ],
   "author": "Liz3",
-  "license": "ISC",
+  "license": "GPL-2.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/HCInk/dis-light.git"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "homepage": "https://gitlab.com/HCInk/dis-light/-/blob/master/README.md",
   "devDependencies": {
-    "cmake-js": "^6.1.0"
+    "@types/node": "^13.13.5",
+    "cmake-js": "^6.1.0",
+    "husky": "^4.2.5",
+    "prettier": "^2.0.5",
+    "pretty-quick": "^2.0.1",
+    "tsc": "^1.20150623.0",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "bindings": "^1.5.0",
