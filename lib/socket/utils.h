@@ -44,7 +44,8 @@ static void discord_handle_reply(const HttpResponsePtr& out, Napi::ThreadSafeFun
   };
   discord_simple_response* return_target = new discord_simple_response();
   auto errorCode = out->errorCode;
-  if(errorCode != HttpErrorCode::Ok) {
+  auto reponseCode = out->statusCode;
+  if(errorCode != HttpErrorCode::Ok || responseCode > 299 || responseCode < 200) {
     return_target->value = out->errorMsg;
     return_target->success = false;
   } else {
@@ -86,13 +87,28 @@ static void discord_edit_text_message_async(std::string token, std::string& chan
                                             });
 }
 
-static void discord_leave_guild(std::string token, std::string& guild_id, Napi::Function cbFunc) {
+static void discord_leave_guild_async(std::string token, std::string& guild_id, Napi::Function cbFunc) {
   const char* DISCORD_API_BASE = "https://discordapp.com";
   std::string url = std::string(DISCORD_API_BASE) + "/api/users/@me/guilds/" + guild_id;
   auto ref = Napi::Persistent(cbFunc);
   auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Guild Leave Callback", 0, 1);
   HttpClient* httpClient = new HttpClient(true);
   auto args = httpClient->createRequest(url, HttpClient::kDel);
+  args->extraHeaders = get_default_headers(token);
+  bool ok = httpClient->performRequest(args, [tsfn](const HttpResponsePtr& out)
+                                       {
+                                         discord_handle_reply(out, tsfn);
+
+    });
+}
+
+static void discord_get_guild_channels_async(std::string token, std::string& guild_id, Napi::Function cbFunc) {
+  const char* DISCORD_API_BASE = "https://discordapp.com";
+  std::string url = std::string(DISCORD_API_BASE) + "/guilds/" + guild_id + "/channels";
+  auto ref = Napi::Persistent(cbFunc);
+  auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Guild ChannelGet Callback", 0, 1);
+  HttpClient* httpClient = new HttpClient(true);
+  auto args = httpClient->createRequest(url, HttpClient::kGet);
   args->extraHeaders = get_default_headers(token);
   bool ok = httpClient->performRequest(args, [tsfn](const HttpResponsePtr& out)
                                        {

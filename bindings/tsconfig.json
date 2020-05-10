@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "removeComments": true,
+    "sourceMap": true
+  },
+  "files": ["index.ts"]
+}
