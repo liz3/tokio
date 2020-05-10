@@ -8,6 +8,29 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
           result.disconnect();
         })
         result.addEventListener("SESSION_DEP", () => {
+          console.log("session dep")
+          const path = process.argv[2]
+          if(path.toLowerCase().endsWith("mp3")){
+            result.playFile(process.argv[2]);
+          }else if(path.toLowerCase().endsWith("opus")) {
+            result.playOpusFile(process.argv[2])
+          } else {
+            console.log("unsupported file format");
+            return;
+          }
+        })
+        result.addEventListener("READY", () => {
+          console.log("ready fired loolz");
+        })
+        result.connect();
+      });
+    }, 450);
+    setTimeout(() => {
+      bot.connectVoice("609022153467101186", "609022154213949463", (result) => {
+        result.addEventListener("FINISH_PLAY", () => {
+          result.disconnect();
+        })
+        result.addEventListener("SESSION_DEP", () => {
           const path = process.argv[2]
           if(path.toLowerCase().endsWith("mp3")){
             result.playFile(process.argv[2]);
@@ -21,11 +44,13 @@ dis_light.init(process.env.TOKEN, (err, bot) => {
         result.addEventListener("READY", () => {
           console.log("ready fired");
         })
+        console.log("attempting second connect");
         result.connect();
       });
-    }, 450);
+    }, 1000);
+
     setTimeout(() => {
-      bot.editChannelMessage("520592905937616926","707211747886366831", JSON.stringify({ content: "Edited Message"}), (success, data) => {
+      bot.editChannelMessage("609022153467101186","609022154213949463", JSON.stringify({ content: "Edited Message"}), (success, data) => {
       console.log(success, data);
     })
     }, 500)

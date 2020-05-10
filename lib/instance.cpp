@@ -7,7 +7,6 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
   auto token = this->token;
   Napi::Object obj = Napi::Object::New(env);
   auto socket = this->socket;
-  auto vc_socket = this->voice_sock;
   Instance* finalThis = this;
   obj.Set("version", "1.0");
   obj.Set("close", Napi::Function::New(env, [socket, finalThis](const Napi::CallbackInfo& info) {
@@ -26,7 +25,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                          socket->registerEventListener(eventName, callback);
                                                        }
       ));
-  obj.Set("connectVoice", Napi::Function::New(env, [finalThis,socket, vc_socket, env](const Napi::CallbackInfo& info) {
+  obj.Set("connectVoice", Napi::Function::New(env, [finalThis,socket,  env](const Napi::CallbackInfo& info) {
                                                       if (info.Length() != 3) {
                                                            Napi::TypeError::New(env, "Wrong number of arguments")
                                                              .ThrowAsJavaScriptException();
@@ -36,7 +35,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                          std::string channel_id = info[1].As<Napi::String>().Utf8Value();
                                                          Napi::Env tEnv = info.Env();
                                                          Napi::Function callback = info[2].As<Napi::Function>();
-                                                         finalThis->generateVoiceBindings(tEnv, callback, server_id, channel_id,socket, vc_socket);
+                                                         finalThis->generateVoiceBindings(tEnv, callback, server_id, channel_id,socket);
                                               }
       ));
   obj.Set("sendChannelMessage", Napi::Function::New(env, [finalThis, token](const Napi::CallbackInfo& info) {
@@ -76,20 +75,21 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
       ));
   return obj;
 }
-void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std::string& server_id, std::string& channel_id, DisWebsocket* sock, DisVoiceWebsocket* vc_socket) {
-  if(vc_socket != nullptr) {
+void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std::string& server_id, std::string& channel_id, DisWebsocket* sock) {
+  // if(vc_socket != nullptr) {
 
-    return;
-  }
+  //   return;
+  // }
   auto ref = Napi::Persistent(callback);
   auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Audio creation callback", 0, 1);
   auto finalThis = this;
-  sock->handleVoiceInit(server_id, channel_id, [vc_socket, sock, server_id, channel_id, tsfn, finalThis](const json& server_state, const json& voice_state) mutable {
-                                                 vc_socket = new DisVoiceWebsocket(server_state, voice_state, sock->own_id, server_id, channel_id);
+  sock->handleVoiceInit(server_id, channel_id, [sock, server_id, channel_id, tsfn, finalThis](const json& server_state, const json& voice_state) mutable {
+
+                                                 auto vc_socket = new DisVoiceWebsocket(server_state, voice_state, sock->own_id, server_id, channel_id);
                                                  auto callback = [finalThis, sock]( Napi::Env env, Napi::Function jsCallback, DisVoiceWebsocket* socket) {
                                                                    Napi::Object obj = Napi::Object::New(env);
-                                                                     obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
-                                                                                                                   socket->connect();
+                                                                   obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                 socket->connect();
                                                                                                                  }
                                                                          ));
                                                                      obj.Set("addEventListener", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
@@ -134,7 +134,7 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
                                                                      obj.Set("disconnect", Napi::Function::New(env, [socket, finalThis, sock](const Napi::CallbackInfo& info) {
                                                                                                                 socket->handleDisconnect();
                                                                                                                 sock->handleVoiceLeave();
-                                                                                                                finalThis->voice_sock = nullptr;
+                                                                                                               // finalThis->voice_sock = nullptr;
                                                                                                                     }
                                                                          ));
                                                                      jsCallback.Call({ obj } );
@@ -142,6 +142,8 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
                                                  auto status = tsfn.BlockingCall( vc_socket, callback );
                                                  if(status != napi_ok) {
                                                    std::cout << "not ok\n";
+                                                 } else {
+                                                   finalThis->voice_connections.push_back(vc_socket);
                                                  }
                                                });
 }

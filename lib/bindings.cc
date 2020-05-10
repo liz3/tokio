@@ -16,13 +16,13 @@ static void init(const Napi::CallbackInfo& info) {
   }
   Napi::Function callback = info[1].As<Napi::Function>();
   std::string passed_token = info[0].As<Napi::String>().Utf8Value();
-  Instance instance(passed_token);
-  int created = instance.bootstrap();
+  Instance* instance = new Instance(passed_token);
+  int created = instance->bootstrap();
   if(created != 0) {
     callback.Call(env.Global(), {Napi::Number::New(env, created), env.Null()});
     return;
   }
-  Napi::Object instanceArgs = instance.generateBindings(env);
+  Napi::Object instanceArgs = instance->generateBindings(env);
   callback.Call(env.Global(), {env.Null(), instanceArgs});
 
 }
