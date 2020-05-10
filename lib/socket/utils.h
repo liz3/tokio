@@ -44,9 +44,15 @@ static void discord_handle_reply(const HttpResponsePtr& out, Napi::ThreadSafeFun
   };
   discord_simple_response* return_target = new discord_simple_response();
   auto errorCode = out->errorCode;
-  auto reponseCode = out->statusCode;
+  auto responseCode = out->statusCode;
   if(errorCode != HttpErrorCode::Ok || responseCode > 299 || responseCode < 200) {
-    return_target->value = out->errorMsg;
+    if(errorCode != HttpErrorCode::Ok) {
+      json j;
+      j["message"] = out->errorMsg;
+      return_target->value = j.dump();
+    }else {
+      return_target->value = out->payload;
+}
     return_target->success = false;
   } else {
     auto payload = out->payload;
@@ -104,9 +110,23 @@ static void discord_leave_guild_async(std::string token, std::string& guild_id, 
 
 static void discord_get_guild_channels_async(std::string token, std::string& guild_id, Napi::Function cbFunc) {
   const char* DISCORD_API_BASE = "https://discordapp.com";
-  std::string url = std::string(DISCORD_API_BASE) + "/guilds/" + guild_id + "/channels";
+  std::string url = std::string(DISCORD_API_BASE) + "/api/guilds/" + guild_id + "/channels";
   auto ref = Napi::Persistent(cbFunc);
   auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"Guild ChannelGet Callback", 0, 1);
+  HttpClient* httpClient = new HttpClient(true);
+  auto args = httpClient->createRequest(url, HttpClient::kGet);
+  args->extraHeaders = get_default_headers(token);
+  bool ok = httpClient->performRequest(args, [tsfn](const HttpResponsePtr& out)
+                                       {
+                                         discord_handle_reply(out, tsfn);
+
+    });
+}
+static void discord_get_channel_async(std::string token, std::string& channel_id, Napi::Function cbFunc) {
+  const char* DISCORD_API_BASE = "https://discordapp.com";
+  std::string url = std::string(DISCORD_API_BASE) + "/api/channels/" + channel_id;
+  auto ref = Napi::Persistent(cbFunc);
+  auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"ChannelGet Callback", 0, 1);
   HttpClient* httpClient = new HttpClient(true);
   auto args = httpClient->createRequest(url, HttpClient::kGet);
   args->extraHeaders = get_default_headers(token);

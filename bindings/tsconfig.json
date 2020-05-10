@@ -1,7 +1,14 @@
 {
   "compilerOptions": {
     "removeComments": true,
-    "sourceMap": true
+    "sourceMap": false,
+    "outDir": "./build"
   },
-  "files": ["index.ts"]
+  "files": [
+    "index.ts",
+    "impl/guild.ts",
+    "impl/channel.ts",
+    "def/bot.ts",
+    "def/discord.ts"
+  ]
 }

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cmake-js compile && node index.js",
-    "compile": "cmake-js compile"
+    "compile": "cd bindings && tsc && cd .. && cmake-js compile"
   },
   "keywords": [
     "discord",

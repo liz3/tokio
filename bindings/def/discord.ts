@@ -24,6 +24,10 @@ interface ResponsePayload {
 interface Channel {
   id: string;
 }
+interface Guild {
+  id: string;
+  channels: Channel[];
+}
 interface VoiceConnection {
   addEventListener(name: VoiceEvent, callback: (EventResponse) => void);
   connect(): void;
@@ -38,13 +42,15 @@ interface Bot {
   close(): void;
   addEventListener(name: GatewayEvent, callback: (EventResponse) => void);
   connect(): void;
+  getGuild(guildId: string): Promise<Guild>;
+  getChannel(channelId: string): Promise<Channel>;
 }
 interface TextChannel extends Channel {
   send(payload: any): Promise<ResponsePayload>;
+  guildId: string;
 }
 interface VoiceChannel extends Channel {
   connect(): Promise<VoiceConnection>;
-  connected: boolean;
 }
 
 interface GuildChannelsPayload extends ResponsePayload {
@@ -56,4 +62,6 @@ interface GuildChannelsPayload extends ResponsePayload {
 interface MessageCreateEvent extends EventResponse {
   messageId: string;
   channel: TextChannel;
+  content: string;
+  authorId: string;
 }
