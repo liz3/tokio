@@ -26,7 +26,6 @@ void VoiceConnection::send(unsigned char buffer[], int size) {
 }
 void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
   encode_seq++;
-  timestamp += kFrameSize;
   const uint8_t header[12] = {
                                       0x80,
                                       0x78,
@@ -49,6 +48,7 @@ void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
 	crypto_secretbox_easy(audioDataPacket.data() + sizeof header,
                         encodedAudioData, len, nonce, &key[0]);
   this->send(audioDataPacket.data(), audioDataPacket.size());
+  timestamp += kFrameSize;
 
 }
 void VoiceConnection::playFile(std::string filePath) {
@@ -160,7 +160,7 @@ void VoiceConnection::playOpusFile(std::string filePath) {
       op_free(file);
       return;
     }
-    int size = 20 * 48 * 2;
+    int size = 960 * 2;
     opus_int16* buff = new opus_int16[size];
     int o = op_read(file,buff,size, NULL);
     if(o <= 0) break;
