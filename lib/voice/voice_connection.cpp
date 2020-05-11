@@ -175,7 +175,7 @@ void VoiceConnection::playOpusFile(std::string filePath) {
       sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 
 #ifdef __APPLE__
-      std::this_thread::sleep_for(std::chrono::microseconds(17600-sendTime-extraBuffer));
+      std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
 #else
       std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
 #endif
