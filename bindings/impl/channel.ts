@@ -1,3 +1,4 @@
+import { prepareFile } from "./youtube-dl";
 const cache = {};
 const voiceCache = {};
 
@@ -81,6 +82,15 @@ export function generateVoiceChannel(channelId: string, guildId: string, bot) {
                 connection.playing = true;
 
                 result.playFile(path);
+              } else if (
+                lower.startsWith("http://") ||
+                lower.startsWith("https://")
+              ) {
+                prepareFile(path)
+                  .then((resultFile) => {
+                    result.playOpusFile(resultFile);
+                  })
+                  .catch((err) => console.log(err));
               }
             },
           };
