@@ -164,23 +164,23 @@ void VoiceConnection::playOpusFile(std::string filePath) {
     opus_int16* buff = new opus_int16[size];
     int o = op_read(file,buff,size, NULL);
     if(o <= 0) break;
-    begin = std::chrono::steady_clock::now();
     std::vector<opus_int16> values(buff, buff + size);
+    begin = std::chrono::steady_clock::now();
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
 
-      end = std::chrono::steady_clock::now();
-      sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    }
+
+    end = std::chrono::steady_clock::now();
+    sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 
 #ifdef __APPLE__
-      std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
+    std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
 #else
-      std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
+    std::this_thread::sleep_for(std::chrono::microseconds(19870-sendTime-extraBuffer));
 #endif
-
-    }
     delete[] buff;
   }
   op_free(file);
