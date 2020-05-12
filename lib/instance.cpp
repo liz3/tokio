@@ -106,6 +106,20 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
 
                                               }
       ));
+       obj.Set("getGuildStandalone", Napi::Function::New(env, [finalThis, token](const Napi::CallbackInfo& info) {
+                                                           if (info.Length() != 2) {
+                                                             Napi::TypeError::New(info.Env(), "Wrong number of arguments")
+                                                               .ThrowAsJavaScriptException();
+                                                             return;
+                                                           }
+                                                           std::string guild_id = info[0].As<Napi::String>().Utf8Value();
+                                                           Napi::Function callback = info[1].As<Napi::Function>();
+
+                                                           discord_get_guild_async(token, guild_id, callback);
+
+                                              }
+      ));
+
  obj.Set("connect", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
 
                                                 socket->connect();

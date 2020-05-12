@@ -27,6 +27,7 @@ interface Channel {
 interface Guild {
   id: string;
   channels: Channel[];
+  voice_states: any[];
 }
 interface VoiceConnection {
   addEventListener(name: VoiceEvent, callback: (EventResponse) => void);

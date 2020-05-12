@@ -136,4 +136,19 @@ static void discord_get_channel_async(std::string token, std::string& channel_id
 
     });
 }
+static void discord_get_guild_async(std::string token, std::string& guild_id, Napi::Function cbFunc) {
+  const char* DISCORD_API_BASE = "https://discordapp.com";
+  std::string url = std::string(DISCORD_API_BASE) + "/api/guilds/" + guild_id;
+  auto ref = Napi::Persistent(cbFunc);
+  auto tsfn = Napi::ThreadSafeFunction::New(ref.Env(),ref.Value(),"GuildGet Callback", 0, 1);
+  HttpClient* httpClient = new HttpClient(true);
+  auto args = httpClient->createRequest(url, HttpClient::kGet);
+  args->extraHeaders = get_default_headers(token);
+  bool ok = httpClient->performRequest(args, [tsfn](const HttpResponsePtr& out)
+                                       {
+                                         discord_handle_reply(out, tsfn);
+
+    });
+}
+
 #endif
