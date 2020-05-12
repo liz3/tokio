@@ -1,4 +1,8 @@
 const { init } = require("./bindings/build/index");
+const fs = require("fs");
+const https = require("https");
+const http = require("http");
+const path = require("path");
 let voiceConn = null;
 let currentChannel = null;
 const voiceStates = {};
@@ -17,23 +21,37 @@ init(process.env.TOKEN).then((instance) => {
     if (
       !result.content.startsWith("!play") &&
       !result.content.startsWith("!disconnect") &&
-      !result.content.startsWith("!stop")
+      !result.content.startsWith("!stop") &&
+      !result.content.startsWith("!download")
     )
       return;
+    if (result.content.startsWith("!download")) {
+      const [cmd, url, file] = result.content.split(";");
+      const module = url.startsWith("https") ? https : http;
+      const fStream = fs.createWriteStream(path.join("/media-data", file));
+      result.channel.send("perfoming download...");
+      module.get(url, (response) => {
+        response.on("end", () => {
+          result.channel.send("successfilly savd file!");
+        });
+        response.pipe(fStream);
+      });
+      return;
+    }
     if (result.content === "!stop") {
       if (voiceConn) {
         voiceConn.stop();
         result.channel.send("Stopping to play");
-        return;
       }
+      return;
     }
     if (result.content === "!disconnect") {
       if (voiceConn) {
         voiceConn.disconnect();
         result.channel.send("Stopping to play");
         voiceConn = null;
-        return;
       }
+      return;
     }
     if (voiceConn) {
       voiceConn.playFile(result.content.substr(6));
