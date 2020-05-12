@@ -3,6 +3,14 @@
 This project is still WIP.
 C++ Discord library with node frontend
 
+## Easy usage.
+
+To use the demo bot simply use the [docker image](https://hub.docker.com/r/liz3/relight)
+
+```sh
+docker pull liz3/relight
+```
+
 # building
 
 **Note**: Atm theres no windows support. tho adding in the future is not excluded
