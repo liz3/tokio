@@ -48,6 +48,8 @@ private:
   std::unique_ptr<zstr::istream> zlib_ctx;
   std::string ip;
   std::string session_id;
+  void resume();
+  bool resumed = false;
   int ssrc = 0;
   int port = 0;
   bool connected = false;

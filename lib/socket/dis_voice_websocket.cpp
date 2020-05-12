@@ -18,10 +18,28 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
                                      std::cout <<  "Connection error: " << msg->errorInfo.reason << std::endl;
                                      return;
                                    }
-                                   if (msg->type == ix::WebSocketMessageType::Open) {
-                                     finalThis->handleAuth();
-                                     return;
-                                   }
+                                     if (msg->type == ix::WebSocketMessageType::Close) {
+                                       if(finalThis->running) {
+                                        finalThis->webSocket.close();
+                                        finalThis->running = false;
+                                        finalThis->resume();
+                                      }
+                                      return;
+                                     }
+
+                                     if (msg->type == ix::WebSocketMessageType::Open) {
+                                       if(finalThis->resumed) {
+                                         json f;
+                                         f["token"] = finalThis->token;
+                                         f["session_id"] = finalThis->session_id;
+                                         f["seq"] = finalThis->seq;
+                                         finalThis->sendMessage(7, f);
+                                         finalThis->resumed = false;
+                                       } else {
+                                         finalThis->handleAuth();
+                                       }
+                                       return;
+                                     }
                                    if (msg->type != ix::WebSocketMessageType::Message)
                                      return;
 
@@ -59,6 +77,12 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
                                  }
     );
 }
+void DisVoiceWebsocket::resume() {
+  this->resumed = true;
+  this->webSocket.start();
+  this->running = true;
+}
+
 void DisVoiceWebsocket::close() {
   if(!this->running) return;
   this->webSocket.close();

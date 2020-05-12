@@ -13,6 +13,26 @@ DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto
                                      std::cout <<  "Connection error: " << msg->errorInfo.reason << std::endl;
                                      return;
                                    }
+
+                                    if (msg->type == ix::WebSocketMessageType::Open) {
+                                      if(finalThis->resumed) {
+                                        json f;
+                                        f["token"] = finalThis->token;
+                                        f["session_id"] = finalThis->session_id;
+                                        f["seq"] = finalThis->seq;
+                                        finalThis->sendMessage(6, f);
+                                        finalThis->resumed = false;
+                                      }
+                                     return;
+                                   }
+
+                                   if(msg->type == ix::WebSocketMessageType::Close) {
+                                     if(finalThis->running) {
+                                       finalThis->webSocket.close();
+                                       finalThis->running = false;
+                                       finalThis->resume();
+                                     }
+                                   }
                                    if (msg->type != ix::WebSocketMessageType::Message)
                                      return;
 
@@ -42,10 +62,15 @@ DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto
     this->running = true;
   }
 }
+void DisWebsocket::resume() {
+  this->resumed = true;
+  this->webSocket.start();
+  this->running = true;
+}
 void DisWebsocket::close() {
   if(!this->running) return;
-  this->webSocket.close();
   this->running = false;
+  this->webSocket.close();
 }
 void DisWebsocket::externalClose(const Napi::CallbackInfo& info) {
   this->close();
@@ -150,6 +175,7 @@ void DisWebsocket::messageHandler(const std::string& msg) {
         }
          if(evstr.compare("READY") == 0) {
            this->own_id = parsed["d"]["user"]["id"];
+           this->session_id = parsed["d"]["session_id"];
          }
         for(auto listener : event_handlers) {
           if(evstr.compare(listener.evName) == 0) {

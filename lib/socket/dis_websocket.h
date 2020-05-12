@@ -38,6 +38,9 @@ private:
   void sendHeartBeat();
   static void setupHeartBeatInterval(DisWebsocket* instance, int interval);
   void handleAuth();
+  void resume();
+  bool resumed;
+  std::string session_id;
   long seq;
   std::string token;
   std::stringstream message_stream;

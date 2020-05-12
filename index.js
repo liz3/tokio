@@ -9,7 +9,7 @@ const voiceStates = {};
 init(process.env.TOKEN).then((instance) => {
   const { bot } = instance;
   bot.addEventListener("READY", async (result) => {
-    console.log("READY emited");
+    console.log("READY emited", result);
   });
   bot.addEventListener("VOICE_STATE_UPDATE", async (res) => {
     voiceStates[res.raw.user_id] = res.raw;
