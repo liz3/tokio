@@ -25,7 +25,6 @@ void VoiceConnection::send(unsigned char buffer[], int size) {
          sizeof(servaddr));
 }
 void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
-  encode_seq++;
   const uint8_t header[12] = {
                                       0x80,
                                       0x78,
@@ -48,10 +47,11 @@ void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
 	crypto_secretbox_easy(audioDataPacket.data() + sizeof header,
                         encodedAudioData, len, nonce, &key[0]);
   this->send(audioDataPacket.data(), audioDataPacket.size());
+  encode_seq++;
   timestamp += kFrameSize;
-
 }
 void VoiceConnection::playFile(std::string filePath) {
+  using namespace std::chrono;
   mad_stream_init(&mad_stream);
   mad_synth_init(&mad_synth);
   mad_frame_init(&mad_frame);
@@ -59,9 +59,11 @@ void VoiceConnection::playFile(std::string filePath) {
   const char* filename = filePath.c_str();
   FILE *fp = fopen(filename, "r");
   int fd = fileno(fp);
+  sendCounter = 0;
+  startTime = high_resolution_clock::now();
   struct stat metadata;
   if (fstat(fd, &metadata) >= 0) {
-//    printf("File size %d bytes\n", (int)metadata.st_size);
+
   } else {
     printf("Failed to stat %s\n", filename);
     fclose(fp);
@@ -72,8 +74,6 @@ void VoiceConnection::playFile(std::string filePath) {
   int s = kFrameSize;
   const int extraBuffer = 100;
   int sendTime = 0;
-  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   while (1) {
     if(this->interuptFlag) {
       this->running = false;
@@ -117,24 +117,23 @@ void VoiceConnection::playFile(std::string filePath) {
       --s;
       if(s == 0 || sample_len<0) {
 
-        begin = std::chrono::steady_clock::now();
-
         std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
         auto entry = opus_out[0];
         uint8_t * encodedAudioDataPointer = &entry[0];
         this->preparePacket(encodedAudioDataPointer, entry.size());
 
-        end = std::chrono::steady_clock::now();
-        sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-
-        #ifdef __APPLE__
-        std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
-        #else
-        std::this_thread::sleep_for(std::chrono::microseconds(20000-sendTime-extraBuffer));
-        #endif
-
         s = kFrameSize;
         audio_set.clear();
+        //sleep logic
+        ++sendCounter;
+
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        duration<double> abs_elapsed = duration_cast<duration<double>>(t2 - startTime);
+        double play_head = kFrameSizeSecs * sendCounter;
+        double delay = play_head - abs_elapsed.count();
+        if(delay > 0)
+          std::this_thread::sleep_for(std::chrono::microseconds((int) (delay * 1000000)));
+
       }
     }
   }
@@ -145,14 +144,12 @@ void VoiceConnection::playFile(std::string filePath) {
   fclose(fp);
 }
 void VoiceConnection::playOpusFile(std::string filePath) {
-
+  using namespace std::chrono;
   const char* filename = filePath.c_str();
   int* opus_err;
   OggOpusFile *file = op_open_file(filename, opus_err);
-  const int extraBuffer = 100;
-  int sendTime = 0;
-  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  sendCounter = 0;
+  startTime = high_resolution_clock::now();
   while(1) {
     if(this->interuptFlag) {
       this->running = false;
@@ -160,28 +157,25 @@ void VoiceConnection::playOpusFile(std::string filePath) {
       op_free(file);
       return;
     }
-    int size = 960 * 2;
+    int size = kFrameSize * 2;
     opus_int16* buff = new opus_int16[size];
     int o = op_read(file,buff,size, NULL);
     if(o <= 0) break;
     std::vector<opus_int16> values(buff, buff + size);
-    begin = std::chrono::steady_clock::now();
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
+     }
+    //sleep logic
+    ++sendCounter;
 
-    }
-
-    end = std::chrono::steady_clock::now();
-    sendTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-
-#ifdef __APPLE__
-    std::this_thread::sleep_for(std::chrono::microseconds(17500-sendTime-extraBuffer));
-#else
-    std::this_thread::sleep_for(std::chrono::microseconds(19870-sendTime-extraBuffer));
-#endif
-    delete[] buff;
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    duration<double> abs_elapsed = duration_cast<duration<double>>(t2 - startTime);
+    double play_head = kFrameSizeSecs * sendCounter;
+    double delay = play_head - abs_elapsed.count();
+    if(delay > 0)
+      std::this_thread::sleep_for(std::chrono::microseconds((int) (delay * 1000000)));
   }
   op_free(file);
 }

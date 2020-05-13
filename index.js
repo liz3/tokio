@@ -32,7 +32,7 @@ init(process.env.TOKEN).then((instance) => {
       result.channel.send("perfoming download...");
       module.get(url, (response) => {
         response.on("end", () => {
-          result.channel.send("successfilly savd file!");
+          result.channel.send("successfully saved file!");
         });
         response.pipe(fStream);
       });
@@ -48,7 +48,7 @@ init(process.env.TOKEN).then((instance) => {
     if (result.content === "!disconnect") {
       if (voiceConn) {
         voiceConn.disconnect();
-        result.channel.send("Stopping to play");
+        result.channel.send("Disconnecting");
         voiceConn = null;
       }
       return;

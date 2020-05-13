@@ -23,13 +23,15 @@
 #ifndef __APPLE__
 #include <cstring>
 #endif
-constexpr auto kFrameSize = 960;
+constexpr auto kFrameSize = 48 * 20;
 constexpr auto kNumChannels = 2;
 constexpr auto kSampleRate = 48000;
+constexpr auto kFrameSizeSecs = 0.02;
 class VoiceConnection {
  private:
   bool ready = false;
-
+  int sendCounter;
+  std::chrono::high_resolution_clock::time_point startTime;
   opus::Encoder encoder;
   std::string& address;
   int port;
