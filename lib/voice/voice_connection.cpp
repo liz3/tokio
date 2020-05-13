@@ -51,6 +51,7 @@ void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
   timestamp += kFrameSize;
 }
 void VoiceConnection::playFile(std::string filePath) {
+
   using namespace std::chrono;
   mad_stream_init(&mad_stream);
   mad_synth_init(&mad_synth);
@@ -72,8 +73,6 @@ void VoiceConnection::playFile(std::string filePath) {
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, MAP_SHARED, fd, 0);
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
   int s = kFrameSize;
-  const int extraBuffer = 100;
-  int sendTime = 0;
   while (1) {
     if(this->interuptFlag) {
       this->running = false;
