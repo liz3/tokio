@@ -48,7 +48,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string message = info[1].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[2].As<Napi::Function>();
 
-                                                           discord_send_text_message_async(token, channel_id, message, callback);
+                                                           finalThis->httpClient->discord_send_text_message_async(channel_id, message, callback);
 
                                               }
       ));
@@ -63,7 +63,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string message = info[2].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[3].As<Napi::Function>();
 
-                                                           discord_edit_text_message_async(token, channel_id, message_id, message, callback);
+                                                            finalThis->httpClient->discord_edit_text_message_async(channel_id, message_id, message, callback);
 
                                               }
       ));
@@ -76,7 +76,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string guild_id = info[0].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[1].As<Napi::Function>();
 
-                                                           discord_leave_guild_async(token, guild_id, callback);
+                                                            finalThis->httpClient->discord_leave_guild_async(guild_id, callback);
 
                                               }
       ));
@@ -89,7 +89,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string guild_id = info[0].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[1].As<Napi::Function>();
 
-                                                           discord_get_guild_channels_async(token, guild_id, callback);
+                                                            finalThis->httpClient->discord_get_guild_channels_async(guild_id, callback);
 
                                               }
       ));
@@ -102,7 +102,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string channel_id = info[0].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[1].As<Napi::Function>();
 
-                                                           discord_get_channel_async(token, channel_id, callback);
+                                                            finalThis->httpClient->discord_get_channel_async(channel_id, callback);
 
                                               }
       ));
@@ -115,7 +115,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string guild_id = info[0].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[1].As<Napi::Function>();
 
-                                                           discord_get_guild_async(token, guild_id, callback);
+                                                           finalThis->httpClient->discord_get_guild_async(guild_id, callback);
 
                                               }
       ));
@@ -212,11 +212,12 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
 }
 
 int Instance::bootstrap() {
-  discord_simple_response response = discord_get_gateway_endpoint(this->token);
+  discord_simple_response response = DisHttpClient::discord_get_gateway_endpoint(this->token);
   if(!response.success) {
     return 1;
   }
   std::string final_url = std::string(response.value +  "/?compress=zlib-stream&v=6&encoding=json");
+  this->httpClient = new DisHttpClient(this->token);
   this->socket = new DisWebsocket(final_url, this->token, false);
   return 0;
 };
