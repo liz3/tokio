@@ -1,5 +1,5 @@
 {
-  "name": "dis-light",
+  "name": "tokio",
   "version": "1.0.0",
   "description": "C++ library for high performance discord audio trhoughput",
   "main": "index.js",
@@ -16,7 +16,7 @@
   "license": "GPL-2.0-only",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/HCInk/dis-light.git"
+    "url": "https://gitlab.com/HCInk/tokio.git"
   },
   "os": [
     "darwin",
@@ -27,7 +27,7 @@
       "pre-commit": "pretty-quick --staged"
     }
   },
-  "homepage": "https://gitlab.com/HCInk/dis-light/-/blob/master/README.md",
+  "homepage": "https://gitlab.com/HCInk/tokio/-/blob/master/README.md",
   "devDependencies": {
     "@types/node": "^13.13.5",
     "cmake-js": "^6.1.0",
