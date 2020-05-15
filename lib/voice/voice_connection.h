@@ -14,6 +14,7 @@
 #include <sstream>
 #include "stringutils.h"
 #include <thread>
+#include <fstream>
 #include <chrono>
 #include <sodium.h>
 #include <mad.h>
@@ -115,6 +116,7 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
   int keyLength = 0;
   void playFile(std::string filePath);
   void playOpusFile(std::string filePath);
+  void playWavFile(std::string filePath);
   bool interuptFlag = false;
   bool running = true;
 };

@@ -142,6 +142,74 @@ void VoiceConnection::playFile(std::string filePath) {
   mad_stream_finish(&mad_stream);
   fclose(fp);
 }
+void VoiceConnection::playWavFile(std::string filePath) {
+  using namespace std::chrono;
+  std::ifstream stream(filePath.c_str());
+
+  char header [5];
+  stream.read(header, 4);
+  header[4] = '\0';
+  int chunkSize;  stream.read(reinterpret_cast<char *>(&chunkSize), sizeof(chunkSize));
+  int rawAudioSize = chunkSize - 36;
+  char wave[5];
+  stream.read(wave, 4);
+  wave[4] = '\0';
+  char fmt[5];
+  stream.read(fmt, 4);
+  fmt[4] = '\0';
+  int Subchunk1Size;
+  stream.read(reinterpret_cast<char *>(&Subchunk1Size), sizeof(Subchunk1Size));
+  int16_t AudioFormat;
+  stream.read(reinterpret_cast<char *>(&AudioFormat), sizeof(AudioFormat));
+  int16_t NumChannels;
+  stream.read(reinterpret_cast<char *>(&NumChannels), sizeof(NumChannels));
+  int32_t SampleRate;
+  stream.read(reinterpret_cast<char *>(&SampleRate), sizeof(SampleRate));
+  int32_t ByteRate;
+  stream.read(reinterpret_cast<char *>(&ByteRate), sizeof(ByteRate));
+  int16_t BlockAlign;
+  stream.read(reinterpret_cast<char *>(&BlockAlign), sizeof(BlockAlign));
+  int16_t BitsPerSample;
+  stream.read(reinterpret_cast<char *>(&BitsPerSample), sizeof(BitsPerSample));
+  char data [5];
+  stream.read(data, 4);
+  data[4] = '\0';
+  int32_t Subchunk2Size;
+  stream.read(reinterpret_cast<char *>(&Subchunk2Size), sizeof(Subchunk2Size));
+  char LIST[Subchunk2Size +1];
+  stream.read(LIST, Subchunk2Size);
+  LIST[Subchunk2Size + 1] = '\0';
+  stream.read(data, 4);
+  int32_t Subchunk3Size;
+  stream.read(reinterpret_cast<char *>(&Subchunk3Size), sizeof(Subchunk3Size));
+  sendCounter = 0;
+  startTime = high_resolution_clock::now();
+
+  while(1) {
+    if(Subchunk3Size <= 0) break;
+    int size = kFrameSize * 2;
+    Subchunk3Size -= size * 2;
+    opus_int16 buff[size];
+    stream.read(reinterpret_cast<char *>(&buff), size * 2);
+    std::vector<opus_int16> values(buff, buff + size);
+    std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
+    for(auto entry : opus_out) {
+      uint8_t * encodedAudioDataPointer = &entry[0];
+      this->preparePacket(encodedAudioDataPointer, entry.size());
+     }
+    //sleep logic
+    ++sendCounter;
+
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    duration<double> abs_elapsed = duration_cast<duration<double>>(t2 - startTime);
+    double play_head = kFrameSizeSecs * sendCounter;
+    double delay = play_head - abs_elapsed.count();
+    if(delay > 0)
+      std::this_thread::sleep_for(std::chrono::microseconds((int) (delay * 1000000)));
+
+  }
+  stream.close();
+}
 void VoiceConnection::playOpusFile(std::string filePath) {
   using namespace std::chrono;
   const char* filename = filePath.c_str();

@@ -82,6 +82,10 @@ export function generateVoiceChannel(channelId: string, guildId: string, bot) {
                 connection.playing = true;
 
                 result.playFile(path);
+              } else if (lower.endsWith(".wav")) {
+                connection.playing = true;
+
+                result.playWavFile(path);
               } else if (
                 lower.startsWith("http://") ||
                 lower.startsWith("https://")

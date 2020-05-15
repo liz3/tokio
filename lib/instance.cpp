@@ -176,7 +176,18 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
                                                                                                                     }
                                                                                                                     std::string path = info[0].As<Napi::String>().Utf8Value();
                                                                                                                     socket->playFile(path, "opus");
-                                                                                                                  }
+                                                                                                                      }
+                                                                         ));
+                                                                     obj.Set("playWavFile", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+                                                                                                                    auto env = info.Env();
+                                                                                                                    if (info.Length() != 1) {
+                                                                                                                      Napi::TypeError::New(env, "Wrong number of arguments")
+                                                                                                                        .ThrowAsJavaScriptException();
+                                                                                                                      return;
+                                                                                                                    }
+                                                                                                                    std::string path = info[0].As<Napi::String>().Utf8Value();
+                                                                                                                    socket->playFile(path, "wav");
+                                                                                                                      }
                                                                          ));
 
                                                                      obj.Set("stop", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
