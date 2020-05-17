@@ -77,7 +77,7 @@ Simply Run: `./setup.sh`
 
 (Make sure to use forward slashes!, use git bash for the sake of inline env vars)
 
-1. `npm run compile`
+1. `npm install`
 2. `VCPKG_ROOT=/path/to/vcpkg-root npm run compile`, Example: `VCPKG_ROOT=C:/Users/liz3/Desktop/vcpkg npm run compile`
 
 # Running
