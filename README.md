@@ -1,7 +1,16 @@
 # Tokio
 
 This project is still WIP.
-C++ Discord library with node frontend
+C++ Discord library with node bindings focused on audio playback.
+
+The Core parts as networking with discord/audio decoding and encoding is written in [c++11](https://gitlab.com/HCInk/tokio/-/tree/master/lib).
+Theres a thin api wrapper around the native bindings written in [Typescript](https://gitlab.com/HCInk/tokio/-/tree/master/bindings)
+
+## Supported file formats
+
+- MPEG3(mp3)
+- opus(.opus in ogg container)
+- WAV(experimental!)
 
 ## Easy usage.
 
@@ -13,6 +22,11 @@ docker pull liz3/relight
 
 # building
 
+## prerequisites
+
+- [node/npm](https://nodejs.org/en/)
+- [cmake](https://cmake.org/download/)
+
 ## Windows
 
 First of install [windows-build-toold](https://www.npmjs.com/package/windows-build-tools)
@@ -23,11 +37,6 @@ npm install --global --production windows-build-tools
 ```
 
 Then also install [vcpkg](https://github.com/microsoft/vcpkg#quick-start)
-
-## prerequisites
-
-- [node/npm](https://nodejs.org/en/)
-- [cmake](https://cmake.org/download/)
 
 ## Native deps
 
@@ -109,3 +118,7 @@ To add Youtube dl which is needed by the web fetcher, simply run the script to f
 - mad
 - sodium
 - opusfile
+
+# LICENSE
+
+Tokio is free software licensed under [GPL 2.0](https://gitlab.com/HCInk/tokio/-/tree/master/LICENSE)
