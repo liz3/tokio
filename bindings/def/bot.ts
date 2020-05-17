@@ -10,6 +10,7 @@ export default function init(token: string): Promise<Instance> {
   return new Promise((resolve, reject) => {
     dis_light.init(token, (err, bot) => {
       if (err) {
+        console.log(err);
         reject(err);
         return;
       }

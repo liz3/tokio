@@ -3,6 +3,11 @@ using json = nlohmann::json;
 DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto_connect) {
   this->webSocket.setUrl(socket_url);
   this->webSocket.disablePerMessageDeflate();
+  #ifdef _WIN32 
+  ix::SocketTLSOptions opt;
+  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  this->webSocket.setTLSOptions(opt);
+  #endif
   this->seq = 0;
   this->token = token;
   zlib_ctx = std::make_unique<zstr::istream>(message_stream);

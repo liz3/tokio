@@ -8,7 +8,6 @@
 #include <thread>         // std::thread
 #include <chrono>
 #include <string>
-#include <unistd.h>
 #include <optional>
 #include "zlib.h"
 #include "zconf.h"
@@ -17,6 +16,9 @@
 #include "../zstr/zstr.h"
 #include "../voice/voice_connection.h"
 #include "event_handler.h"
+#ifdef _WIN32
+#include <winbase.h>
+#endif
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
 using json = nlohmann::json;
 class DisVoiceWebsocket {

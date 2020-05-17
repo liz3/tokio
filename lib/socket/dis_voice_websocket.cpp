@@ -6,6 +6,11 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
   this->channel_id = channel_id;
   std::string target_endpoint = "wss://"+ std::string(server_state["endpoint"]).substr(0, std::string(server_state["endpoint"]).length() -3) + "/?v=4";
   this->webSocket.setUrl(target_endpoint);
+   #ifdef _WIN32 
+  ix::SocketTLSOptions opt;
+  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  this->webSocket.setTLSOptions(opt);
+  #endif
   this->session_id = voice_state["session_id"];
   this->webSocket.disablePerMessageDeflate();
   this->seq = 0;
@@ -139,12 +144,21 @@ void DisVoiceWebsocket::updateSpeakingState(bool speaking) {
 }
 void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
   if(!this->running || this->voiceConn == nullptr || this->playing) return;
+ #ifdef _WIN32
+ LPSTR winpath = const_cast<char *>(path.c_str());
+GetFileAttributes(winpath);
+ if(INVALID_FILE_ATTRIBUTES == GetFileAttributes(winpath) && GetLastError()==ERROR_FILE_NOT_FOUND)
+{
+  return;
+}
+ #else
   if( access(path.c_str(), F_OK ) != -1 ) {
     // file exists
   } else {
   std::cout << "lul " << type << "\n";
     return;
   }
+  #endif
   auto finalThis = this;
   finalThis->updateSpeakingState(true);
   std::thread t([finalThis, path, type](){

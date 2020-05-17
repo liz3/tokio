@@ -6,11 +6,19 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#else
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#include "win_mmap/windows-mmap.h"
+#endif
 #include <sstream>
 #include "stringutils.h"
 #include <thread>
@@ -18,8 +26,6 @@
 #include <chrono>
 #include <sodium.h>
 #include <mad.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include <opus/opusfile.h>
 #ifndef __APPLE__
 #include <cstring>
@@ -38,8 +44,13 @@ class VoiceConnection {
   int port;
   unsigned int ssrc;
   //soxket
+  #ifdef _WIN32
+  SOCKET sockfd;
+  sockaddr_in servaddr;
+  #else
   int sockfd;
   struct sockaddr_in servaddr;
+  #endif
   short encode_seq = 0;
   int encode_count = 0;
   int timestamp = 0;
@@ -111,7 +122,7 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
   std::string own_ip;
   int own_port = 0;
   void startHeartBeat(int interval);
-  void send(unsigned char buffer[], int size);
+  void send(unsigned char* buffer, int size);
   std::vector<unsigned char> key;
   int keyLength = 0;
   void playFile(std::string filePath);

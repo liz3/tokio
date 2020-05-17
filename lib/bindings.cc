@@ -3,7 +3,6 @@
 #include "instance.h"
 #include <ixwebsocket/IXNetSystem.h>
 #include <nlohmann/json.hpp>
-#include <unistd.h>
 
 
 static void init(const Napi::CallbackInfo& info) {

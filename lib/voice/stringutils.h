@@ -5,6 +5,10 @@
 #ifndef __APPLE__
 #include <algorithm>
 #endif
+#ifdef _WIN32
+#include <cwctype>
+#include <cctype>
+#endif
 static inline void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
         return !std::isspace(ch);
