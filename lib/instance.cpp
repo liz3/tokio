@@ -63,7 +63,7 @@ Napi::Object Instance::generateBindings(Napi::Env env) {
                                                            std::string message = info[2].As<Napi::String>().Utf8Value();
                                                            Napi::Function callback = info[3].As<Napi::Function>();
 
-                                                            finalThis->httpClient->discord_edit_text_message_async(channel_id, message_id, message, callback);
+                                                           finalThis->httpClient->discord_edit_text_message_async(channel_id, message_id, message, callback);
 
                                               }
       ));
