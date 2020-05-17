@@ -68,10 +68,9 @@ Run this in the folder where you installed vcpkg
 
 ### macOS & GNU/Linux
 
-Simply Run: `./setup.sh`
-
-1. `npm install`
-2. `npm run compile`
+1. `./setup.sh`
+2. `npm install`
+3. `npm run compile`
 
 ### Windows
 
