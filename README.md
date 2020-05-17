@@ -46,10 +46,14 @@ Install native dependencies
 
 `brew install mad libsodium opus opusfile nlohmann-json`
 
+Then simply: `./setup.sh`
+
 ### Gnu/Linux
 
 (This is applied to apt using distros, but should work on all, tested in ubuntu 19.10 docker container)
 `apt install nlohmann-json3-dev libmad0-dev libsodium-dev libopus-dev libopusfile-dev`
+
+Then simply: `./setup.sh`
 
 ### Windows
 
@@ -68,9 +72,8 @@ Run this in the folder where you installed vcpkg
 
 ### macOS & GNU/Linux
 
-1. `./setup.sh`
-2. `npm install`
-3. `npm run compile`
+1. `npm install`
+2. `npm run compile`
 
 ### Windows
 
