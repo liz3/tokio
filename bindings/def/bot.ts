@@ -16,6 +16,7 @@ export default function init(token: string): Promise<Instance> {
       const instance: Instance = {
         version: "1.0",
         bot: {
+          raw: bot,
           connect: () => bot.connect(),
           close: () => {
             bot.close();

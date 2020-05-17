@@ -40,6 +40,7 @@ interface VoiceConnection {
 }
 
 interface Bot {
+  raw: any;
   close(): void;
   addEventListener(name: GatewayEvent, callback: (EventResponse) => void);
   connect(): void;
