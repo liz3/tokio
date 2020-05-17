@@ -44,13 +44,13 @@ class VoiceConnection {
   int port;
   unsigned int ssrc;
   //soxket
-  #ifdef _WIN32
+#ifdef _WIN32
   SOCKET sockfd;
   sockaddr_in servaddr;
-  #else
+#else
   int sockfd;
   struct sockaddr_in servaddr;
-  #endif
+#endif
   short encode_seq = 0;
   int encode_count = 0;
   int timestamp = 0;
@@ -61,46 +61,41 @@ class VoiceConnection {
   struct mad_synth mad_synth;
 
  public:
- static std::string string_to_hex(const std::string& input)
-{
+  static std::string string_to_hex(const std::string& input) {
     static const char hex_digits[] = "0123456789ABCDEF";
 
     std::string output;
     output.reserve(input.length() * 2);
-    for (unsigned char c : input)
-    {
-        output.push_back(hex_digits[c >> 4]);
-        output.push_back(hex_digits[c & 15]);
+    for (unsigned char c : input) {
+      output.push_back(hex_digits[c >> 4]);
+      output.push_back(hex_digits[c & 15]);
     }
     return output;
-}
+  }
 
   VoiceConnection(std::string& address, int port, int ssrc);
-  static short getShortBigEndian(char arr[], int offset)
-  {
+  static short getShortBigEndian(char arr[], int offset) {
     return (short) ((arr[offset    ] & 0xff << 8)
                     | (arr[offset + 1] & 0xff));
   };
-  static void setIntBigEndian(unsigned char arr[], int offset, int it)
-    {
-        arr[offset    ] = (unsigned char) ((it >> 24) & 0xFF);
-        arr[offset + 1] = (unsigned char) ((it >> 16) & 0xFF);
-        arr[offset + 2] = (unsigned char) ((it >> 8)  & 0xFF);
-        arr[offset + 3] = (unsigned char) ( it         & 0xFF);
-    }
- static int scale(mad_fixed_t sample) {
-     /* round */
-     sample += (1L << (MAD_F_FRACBITS - 16));
-     /* clip */
-     if (sample >= MAD_F_ONE)
-         sample = MAD_F_ONE - 1;
-     else if (sample < -MAD_F_ONE)
-         sample = -MAD_F_ONE;
-     /* quantize */
-     return sample >> (MAD_F_FRACBITS + 1 - 16);
-}
-static std::vector<unsigned char> to_vector(std::stringstream& ss)
-{
+  static void setIntBigEndian(unsigned char arr[], int offset, int it) {
+    arr[offset    ] = (unsigned char) ((it >> 24) & 0xFF);
+    arr[offset + 1] = (unsigned char) ((it >> 16) & 0xFF);
+    arr[offset + 2] = (unsigned char) ((it >> 8)  & 0xFF);
+    arr[offset + 3] = (unsigned char) ( it         & 0xFF);
+  }
+  static int scale(mad_fixed_t sample) {
+    /* round */
+    sample += (1L << (MAD_F_FRACBITS - 16));
+    /* clip */
+    if (sample >= MAD_F_ONE)
+      sample = MAD_F_ONE - 1;
+    else if (sample < -MAD_F_ONE)
+      sample = -MAD_F_ONE;
+    /* quantize */
+    return sample >> (MAD_F_FRACBITS + 1 - 16);
+  }
+  static std::vector<unsigned char> to_vector(std::stringstream& ss) {
     // discover size of data in stream
     ss.seekg(0, std::ios::beg);
     auto bof = ss.tellg();
@@ -115,7 +110,7 @@ static std::vector<unsigned char> to_vector(std::stringstream& ss)
     ss.read((char*)v.data(), std::streamsize(v.size()));
 
     return v;
-}
+  }
 
 
   bool setupAndHandleSocket();

@@ -3,63 +3,62 @@ using json = nlohmann::json;
 DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto_connect) {
   this->webSocket.setUrl(socket_url);
   this->webSocket.disablePerMessageDeflate();
-  #ifdef _WIN32 
+#ifdef _WIN32
   ix::SocketTLSOptions opt;
   opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
   this->webSocket.setTLSOptions(opt);
-  #endif
+#endif
   this->seq = 0;
   this->token = token;
   zlib_ctx = std::make_unique<zstr::istream>(message_stream);
   auto finalThis = this;
-  webSocket.setOnMessageCallback([finalThis](const ix::WebSocketMessagePtr& msg)
-                                 {
-                                   if(msg->type == ix::WebSocketMessageType::Error) {
-                                     std::cout <<  "Connection error: " << msg->errorInfo.reason << std::endl;
-                                     return;
-                                   }
+  webSocket.setOnMessageCallback([finalThis](const ix::WebSocketMessagePtr& msg) {
+    if(msg->type == ix::WebSocketMessageType::Error) {
+      std::cout <<  "Connection error: " << msg->errorInfo.reason << std::endl;
+      return;
+    }
 
-                                    if (msg->type == ix::WebSocketMessageType::Open) {
-                                      if(finalThis->resumed) {
-                                        json f;
-                                        f["token"] = finalThis->token;
-                                        f["session_id"] = finalThis->session_id;
-                                        f["seq"] = finalThis->seq;
-                                        finalThis->sendMessage(6, f);
-                                        finalThis->resumed = false;
-                                      }
-                                     return;
-                                   }
+    if (msg->type == ix::WebSocketMessageType::Open) {
+      if(finalThis->resumed) {
+        json f;
+        f["token"] = finalThis->token;
+        f["session_id"] = finalThis->session_id;
+        f["seq"] = finalThis->seq;
+        finalThis->sendMessage(6, f);
+        finalThis->resumed = false;
+      }
+      return;
+    }
 
-                                   if(msg->type == ix::WebSocketMessageType::Close) {
-                                     if(finalThis->running) {
-                                       finalThis->webSocket.close();
-                                       finalThis->running = false;
-                                       finalThis->resume();
-                                     }
-                                   }
-                                   if (msg->type != ix::WebSocketMessageType::Message)
-                                     return;
+    if(msg->type == ix::WebSocketMessageType::Close) {
+      if(finalThis->running) {
+        finalThis->webSocket.close();
+        finalThis->running = false;
+        finalThis->resume();
+      }
+    }
+    if (msg->type != ix::WebSocketMessageType::Message)
+      return;
 
-                                   if(!msg->binary) {
-                                     finalThis->messageHandler(std::move(msg->str));
-                                     return;
-                                   }
-                                   std::string payload;
-                                   auto message_stream = &finalThis->message_stream;
-                                   *message_stream << msg->str;
-                                   if(std::strcmp((msg->str.data() + msg->str.size() - 4), "\x00\x00\xff\xff"))
-                                     return;
-                                   std::stringstream ss;
-                                   std::string s;
-                                   finalThis->zlib_ctx->clear();
-                                   while (getline(*finalThis->zlib_ctx, s))
-                                     ss << s;
-                                   ss << '\0';
-                                   payload = ss.str();
-                                   finalThis->messageHandler(std::move(payload));
-                                 }
-    );
+    if(!msg->binary) {
+      finalThis->messageHandler(std::move(msg->str));
+      return;
+    }
+    std::string payload;
+    auto message_stream = &finalThis->message_stream;
+    *message_stream << msg->str;
+    if(std::strcmp((msg->str.data() + msg->str.size() - 4), "\x00\x00\xff\xff"))
+      return;
+    std::stringstream ss;
+    std::string s;
+    finalThis->zlib_ctx->clear();
+    while (getline(*finalThis->zlib_ctx, s))
+      ss << s;
+    ss << '\0';
+    payload = ss.str();
+    finalThis->messageHandler(std::move(payload));
+  }
+                                );
 
   if(auto_connect) {
     this->webSocket.setPingInterval(45);
@@ -150,69 +149,69 @@ void DisWebsocket::handleAuth() {
   this->sendMessage(2, data);
 }
 void DisWebsocket::messageHandler(const std::string& msg) {
-    this->seq++;
-    auto parsed = json::parse(msg);
-    int messageOpCode = parsed["op"];
-    switch(messageOpCode) {
-    case 0: {
-      if (parsed["t"].is_string()) {
-        std::string evstr = std::string(parsed["t"]);
-        if(waitingVoiceConnect) {
-          if(evstr.compare("VOICE_SERVER_UPDATE") == 0) {
-            if(voice_states.size() == 1) {
-              voiceInitCallback(parsed["d"], voice_states[0]);
-              waitingVoiceConnect = false;
-              voice_states.clear();
-            } else {
-              voice_states.push_back(parsed["d"]);
-            }
-            return;
-          } else if(evstr.compare("VOICE_STATE_UPDATE") == 0) {
-            if(voice_states.size() == 1) {
-              voiceInitCallback(voice_states[0], parsed["d"]);
-              waitingVoiceConnect = false;
-              voice_states.clear();
-            } else {
-              voice_states.push_back(parsed["d"]);
-            }
-            return;
+  this->seq++;
+  auto parsed = json::parse(msg);
+  int messageOpCode = parsed["op"];
+  switch(messageOpCode) {
+  case 0: {
+    if (parsed["t"].is_string()) {
+      std::string evstr = std::string(parsed["t"]);
+      if(waitingVoiceConnect) {
+        if(evstr.compare("VOICE_SERVER_UPDATE") == 0) {
+          if(voice_states.size() == 1) {
+            voiceInitCallback(parsed["d"], voice_states[0]);
+            waitingVoiceConnect = false;
+            voice_states.clear();
+          } else {
+            voice_states.push_back(parsed["d"]);
           }
+          return;
+        } else if(evstr.compare("VOICE_STATE_UPDATE") == 0) {
+          if(voice_states.size() == 1) {
+            voiceInitCallback(voice_states[0], parsed["d"]);
+            waitingVoiceConnect = false;
+            voice_states.clear();
+          } else {
+            voice_states.push_back(parsed["d"]);
+          }
+          return;
         }
-         if(evstr.compare("READY") == 0) {
-           this->own_id = parsed["d"]["user"]["id"];
-           this->session_id = parsed["d"]["session_id"];
-         }
-        for(auto listener : event_handlers) {
-          if(evstr.compare(listener.evName) == 0) {
-              auto callback = [msg]( Napi::Env env, Napi::Function jsCallback) {
+      }
+      if(evstr.compare("READY") == 0) {
+        this->own_id = parsed["d"]["user"]["id"];
+        this->session_id = parsed["d"]["session_id"];
+      }
+      for(auto listener : event_handlers) {
+        if(evstr.compare(listener.evName) == 0) {
+          auto callback = [msg]( Napi::Env env, Napi::Function jsCallback) {
 
-                                Napi::Object global = env.Global().As<Napi::Object>();
-                                Napi::Function parseFunc = global.Get("JSON").As<Napi::Object>().Get("parse").As<Napi::Function>();
-                                Napi::Value val = parseFunc.Call(env.Global(), {Napi::String::New(parseFunc.Env(), msg.c_str())});
-                                Napi::Object asObject = val.As<Napi::Object>();
-                                auto obj = asObject.Get("d").As<Napi::Object>();
-                                jsCallback.Call({ obj } );
-            };
-            auto status = listener.function.BlockingCall( callback );
-            if(status != napi_ok) {
-              std::cout << "not ok\n";
-            }
+            Napi::Object global = env.Global().As<Napi::Object>();
+            Napi::Function parseFunc = global.Get("JSON").As<Napi::Object>().Get("parse").As<Napi::Function>();
+            Napi::Value val = parseFunc.Call(env.Global(), {Napi::String::New(parseFunc.Env(), msg.c_str())});
+            Napi::Object asObject = val.As<Napi::Object>();
+            auto obj = asObject.Get("d").As<Napi::Object>();
+            jsCallback.Call({ obj } );
+          };
+          auto status = listener.function.BlockingCall( callback );
+          if(status != napi_ok) {
+            std::cout << "not ok\n";
           }
         }
       }
-      break;
     }
-    case 1: {
-      this->sendHeartBeat();
-      break;
-    }
-    case 10: {
-      this->running = true;
-      int interval = parsed["d"]["heartbeat_interval"];
-      std::thread second (DisWebsocket::setupHeartBeatInterval,this, interval);
-      second.detach();
-      this->handleAuth();
-      break;
-    }
-    }
+    break;
+  }
+  case 1: {
+    this->sendHeartBeat();
+    break;
+  }
+  case 10: {
+    this->running = true;
+    int interval = parsed["d"]["heartbeat_interval"];
+    std::thread second (DisWebsocket::setupHeartBeatInterval,this, interval);
+    second.detach();
+    this->handleAuth();
+    break;
+  }
+  }
 }

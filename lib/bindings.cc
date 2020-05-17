@@ -10,7 +10,7 @@ static void init(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (info.Length() != 2) {
     Napi::TypeError::New(env, "Wrong number of arguments")
-      .ThrowAsJavaScriptException();
+    .ThrowAsJavaScriptException();
     return;
   }
   Napi::Function callback = info[1].As<Napi::Function>();

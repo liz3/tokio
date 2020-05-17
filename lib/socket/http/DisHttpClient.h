@@ -14,7 +14,7 @@ struct discord_simple_response {
 };
 
 class DisHttpClient {
-public:
+ public:
   DisHttpClient(std::string& token);
   static discord_simple_response discord_get_gateway_endpoint(std::string& token);
   void discord_send_text_message_async(std::string& channel, std::string& body, Napi::Function cbFunc);
@@ -23,7 +23,7 @@ public:
   void discord_get_guild_channels_async(std::string& guild_id, Napi::Function cbFunc);
   void discord_get_channel_async(std::string& channel_id, Napi::Function cbFunc);
   void discord_get_guild_async(std::string& guild_id, Napi::Function cbFunc);
-private:
+ private:
   static ix::WebSocketHttpHeaders get_default_headers(std::string& token) {
     ix::WebSocketHttpHeaders headers;
     headers["Authorization"] = "Bot " + token;

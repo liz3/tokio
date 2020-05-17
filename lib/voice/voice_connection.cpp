@@ -10,50 +10,50 @@ VoiceConnection::VoiceConnection(std::string& address, int port, int ssrc) : enc
 }
 void VoiceConnection::startHeartBeat(int interval) {
   auto finalThis = this;
-  std::thread t([interval, finalThis](){
-                  while(finalThis->running) {
-                    unsigned char buff[] = {(unsigned char)0xC9, 0, 0, 0, 0, 0, 0, 0, 0};
-                    finalThis->send(buff, 9);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                  }
-                });
+  std::thread t([interval, finalThis]() {
+    while(finalThis->running) {
+      unsigned char buff[] = {(unsigned char)0xC9, 0, 0, 0, 0, 0, 0, 0, 0};
+      finalThis->send(buff, 9);
+      std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+    }
+  });
   t.detach();
 }
 void VoiceConnection::send(unsigned char* buffer, int size) {
-  #ifdef _WIN32
-   int result = sendto(sockfd,reinterpret_cast<const char*>(buffer), sizeof(const char) * size,
-        0, ( SOCKADDR *) &servaddr,
-         sizeof(servaddr));
+#ifdef _WIN32
+  int result = sendto(sockfd,reinterpret_cast<const char*>(buffer), sizeof(const char) * size,
+                      0, ( SOCKADDR *) &servaddr,
+                      sizeof(servaddr));
   if (result == SOCKET_ERROR) {
     std::cout << "send failed: " << WSAGetLastError() << "\n";
-}
-  #else
+  }
+#else
   sendto(sockfd,buffer, sizeof(unsigned char) * size,
-        0, ( struct sockaddr *) &servaddr,
+         0, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
-  #endif
+#endif
 }
 void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
   const uint8_t header[12] = {
-                                      0x80,
-                                      0x78,
-                                      static_cast<uint8_t>((encode_seq  >> (8 * 1)) & 0xff),
-                                      static_cast<uint8_t>((encode_seq  >> (8 * 0)) & 0xff),
-                                      static_cast<uint8_t>((timestamp >> (8 * 3)) & 0xff),
-                                      static_cast<uint8_t>((timestamp >> (8 * 2)) & 0xff),
-                                      static_cast<uint8_t>((timestamp >> (8 * 1)) & 0xff),
-                                      static_cast<uint8_t>((timestamp >> (8 * 0)) & 0xff),
-                                      static_cast<uint8_t>((ssrc      >> (8 * 3)) & 0xff),
-                                      static_cast<uint8_t>((ssrc      >> (8 * 2)) & 0xff),
-                                      static_cast<uint8_t>((ssrc      >> (8 * 1)) & 0xff),
-                                      static_cast<uint8_t>((ssrc      >> (8 * 0)) & 0xff),
+    0x80,
+    0x78,
+    static_cast<uint8_t>((encode_seq  >> (8 * 1)) & 0xff),
+    static_cast<uint8_t>((encode_seq  >> (8 * 0)) & 0xff),
+    static_cast<uint8_t>((timestamp >> (8 * 3)) & 0xff),
+    static_cast<uint8_t>((timestamp >> (8 * 2)) & 0xff),
+    static_cast<uint8_t>((timestamp >> (8 * 1)) & 0xff),
+    static_cast<uint8_t>((timestamp >> (8 * 0)) & 0xff),
+    static_cast<uint8_t>((ssrc      >> (8 * 3)) & 0xff),
+    static_cast<uint8_t>((ssrc      >> (8 * 2)) & 0xff),
+    static_cast<uint8_t>((ssrc      >> (8 * 1)) & 0xff),
+    static_cast<uint8_t>((ssrc      >> (8 * 0)) & 0xff),
   };
   uint8_t nonce[24];
-  std::memcpy(nonce                , header, sizeof header);
+  std::memcpy(nonce, header, sizeof header);
   std::memset(nonce + sizeof header,      0, sizeof nonce - sizeof header);
   std::vector<uint8_t> audioDataPacket(sizeof header + len + crypto_secretbox_MACBYTES);
   std::memcpy(audioDataPacket.data(), header, sizeof header);
-	crypto_secretbox_easy(audioDataPacket.data() + sizeof header,
+  crypto_secretbox_easy(audioDataPacket.data() + sizeof header,
                         encodedAudioData, len, nonce, &key[0]);
   this->send(audioDataPacket.data(), audioDataPacket.size());
   encode_seq++;
@@ -79,11 +79,11 @@ void VoiceConnection::playFile(std::string filePath) {
     fclose(fp);
     return;
   }
-  #ifdef _WIN32
+#ifdef _WIN32
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, 0x02, fd, 0);
-  #else
+#else
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, MAP_SHARED, fd, 0);
-  #endif
+#endif
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
   int s = kFrameSize;
   while (1) {
@@ -162,7 +162,8 @@ void VoiceConnection::playWavFile(std::string filePath) {
   char header [5];
   stream.read(header, 4);
   header[4] = '\0';
-  int chunkSize;  stream.read(reinterpret_cast<char *>(&chunkSize), sizeof(chunkSize));
+  int chunkSize;
+  stream.read(reinterpret_cast<char *>(&chunkSize), sizeof(chunkSize));
   int rawAudioSize = chunkSize - 36;
   char wave[5];
   stream.read(wave, 4);
@@ -189,11 +190,11 @@ void VoiceConnection::playWavFile(std::string filePath) {
   data[4] = '\0';
   int32_t Subchunk2Size;
   stream.read(reinterpret_cast<char *>(&Subchunk2Size), sizeof(Subchunk2Size));
-  #ifdef _WIN32
-    char* LIST = new char[Subchunk2Size +1];
-  #else
+#ifdef _WIN32
+  char* LIST = new char[Subchunk2Size +1];
+#else
   char LIST[Subchunk2Size +1];
-  #endif
+#endif
 
   stream.read(LIST, Subchunk2Size);
   LIST[Subchunk2Size + 1] = '\0';
@@ -207,18 +208,18 @@ void VoiceConnection::playWavFile(std::string filePath) {
     if(Subchunk3Size <= 0) break;
     int size = kFrameSize * 2;
     Subchunk3Size -= size * 2;
-    #ifdef _WIN32
+#ifdef _WIN32
     opus_int16* buff = new opus_int16[size];
-    #else
+#else
     opus_int16 buff[size];
-    #endif
+#endif
     stream.read(reinterpret_cast<char *>(&buff), size * 2);
     std::vector<opus_int16> values(buff, buff + size);
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
-     }
+    }
     //sleep logic
     ++sendCounter;
 
@@ -255,7 +256,7 @@ void VoiceConnection::playOpusFile(std::string filePath) {
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
-     }
+    }
     //sleep logic
     ++sendCounter;
 
@@ -283,24 +284,24 @@ bool VoiceConnection::setupAndHandleSocket() {
     buf << '0';
   }
   buf.flush();
-  #ifdef _WIN32
+#ifdef _WIN32
   sendto(sockfd, (const char *)buf.str().c_str(), 70,
-        0, ( SOCKADDR *) &servaddr,
+         0, ( SOCKADDR *) &servaddr,
          sizeof(servaddr));
-  #else
-    sendto(sockfd, (const char *)buf.str().c_str(), 70,
-        MSG_WAITALL, ( struct sockaddr *) &servaddr,
+#else
+  sendto(sockfd, (const char *)buf.str().c_str(), 70,
+         MSG_WAITALL, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
-  #endif
+#endif
   int n;
   socklen_t len;
   char recv_buff[1024];
-  #ifdef _WIN32
+#ifdef _WIN32
   n = recv(sockfd, (char *)recv_buff, 1024, 0);
-  #else
-   n = recvfrom(sockfd, (char *)recv_buff, 1024,MSG_WAITALL, (struct sockaddr *) &servaddr,
-                &len);
-  #endif
+#else
+  n = recvfrom(sockfd, (char *)recv_buff, 1024,MSG_WAITALL, (struct sockaddr *) &servaddr,
+               &len);
+#endif
   recv_buff[n] = '\0';
 
   std::string ip = std::string(recv_buff, 4, n -6);

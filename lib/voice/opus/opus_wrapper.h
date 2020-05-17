@@ -75,14 +75,16 @@ class Encoder {
   // see documentation for pcm and frame_size at:
   // https://mf4.xiph.org/jenkins/view/opus/job/opus/ws/doc/html/group__opus__encoder.html#gad2d6bf6a9ffb6674879d7605ed073e25
   std::vector<std::vector<unsigned char>> Encode(
-      const std::vector<opus_int16>& pcm, int frame_size);
+                                         const std::vector<opus_int16>& pcm, int frame_size);
 
-  int valid() const { return valid_; }
+  int valid() const {
+    return valid_;
+  }
 
  private:
   std::vector<unsigned char> EncodeFrame(
-      const std::vector<opus_int16>::const_iterator& frame_start,
-      int frame_size);
+    const std::vector<opus_int16>::const_iterator& frame_start,
+    int frame_size);
 
   template <typename... Ts>
   int Ctl(int request, Ts... args) const {
@@ -106,10 +108,12 @@ class Decoder {
   // see documentation at:
   // https://mf4.xiph.org/jenkins/view/opus/job/opus/ws/doc/html/group__opus__decoder.html#ga7d1111f64c36027ddcb81799df9b3fc9
   std::vector<opus_int16> Decode(
-      const std::vector<std::vector<unsigned char>>& packets, int frame_size,
-      bool decode_fec);
+    const std::vector<std::vector<unsigned char>>& packets, int frame_size,
+    bool decode_fec);
 
-  int valid() const { return valid_; }
+  int valid() const {
+    return valid_;
+  }
 
   // Takes an encoded packet and decodes it. Returns the decoded audio
   // see documentation at:

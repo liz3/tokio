@@ -24,7 +24,7 @@
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
 using json = nlohmann::json;
 class DisVoiceWebsocket {
-public:
+ public:
   DisVoiceWebsocket(const json& server_state, const json& voice_state, std::string& id, std::string& server_id, std::string& channel_id);
   void connect();
   void stop();
@@ -34,7 +34,7 @@ public:
   void playFile(std::string& path, std::string type);
   void handleStop();
   void handleDisconnect();
-private:
+ private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
   ix::WebSocket webSocket;

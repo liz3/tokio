@@ -22,7 +22,7 @@ using json = nlohmann::json;
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
 using VoiceInitCallback = std::function<void(const json&,const json&)>;
 class DisWebsocket {
-public:
+ public:
   DisWebsocket(std::string& socket_url, std::string& token, bool auto_connect);
   void connect();
   void stop();
@@ -31,7 +31,7 @@ public:
   void handleVoiceInit(std::string& server_id, std::string& channel_id, const VoiceInitCallback& cb);
   std::string own_id;
   void handleVoiceLeave();
-private:
+ private:
   std::vector<DisEventListener> event_handlers;
   bool running = false;
   ix::WebSocket webSocket;

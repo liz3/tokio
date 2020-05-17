@@ -4,7 +4,7 @@
 #include <string>
 class DisEventListener {
  public:
- DisEventListener(Napi::ThreadSafeFunction function, std::string eventName) : function(function), evName(eventName){}
+  DisEventListener(Napi::ThreadSafeFunction function, std::string eventName) : function(function), evName(eventName) {}
   Napi::ThreadSafeFunction function;
   std::string evName;
 };

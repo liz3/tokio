@@ -1,13 +1,13 @@
-/* 
+/*
  *  IMS Open Corpus Workbench (CWB)
  *  Copyright (C) 1993-2006 by IMS, University of Stuttgart
  *  Copyright (C) 2007-     by the respective contributers (see file AUTHORS)
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the
  *  Free Software Foundation; either version 2, or (at your option) any later
  *  version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful, but
  *  WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
@@ -45,8 +45,7 @@
  * documented much more thoroughly than we could hope to do here.
  */
 void *
-mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
-{
+mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset) {
   HANDLE hmap;
   void *temp;
   size_t len;
@@ -92,8 +91,7 @@ mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
  * @see mmap
  */
 int
-munmap(void *start, size_t length)
-{
+munmap(void *start, size_t length) {
   return !UnmapViewOfFile(start);
 }
 
