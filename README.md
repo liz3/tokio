@@ -85,7 +85,7 @@ Simply Run: `./setup.sh`
 On windows **At The moment** you will have to download the extracted root certificate from firefox in order to establish connections.
 [Download here](https://curl.haxx.se/docs/caextract.html)
 
-After buildung to run, you can use the `npm start` script.
+After building, in order to run you can use the `npm start` script.
 
 ## macOS & GNU/Linux
 
