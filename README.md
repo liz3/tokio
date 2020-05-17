@@ -77,7 +77,7 @@ On windows **At The moment** you will have to download the extracted root certif
 
 After buildung to run, you can use the `npm start` script.
 
-## macOS & GnU/Linux
+## macOS & GNU/Linux
 
 ```sh
 TOKEN=my_discord_token npm start
