@@ -79,7 +79,11 @@ void VoiceConnection::playFile(std::string filePath) {
     fclose(fp);
     return;
   }
+  #ifdef _WIN32
+  const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, 0x02, fd, 0);
+  #else
   const unsigned char *input_stream =(const unsigned char*) mmap(0, metadata.st_size, PROT_READ, MAP_SHARED, fd, 0);
+  #endif
   mad_stream_buffer(&mad_stream, input_stream, metadata.st_size);
   int s = kFrameSize;
   while (1) {
