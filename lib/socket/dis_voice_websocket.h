@@ -18,6 +18,8 @@
 #include "event_handler.h"
 #ifdef _WIN32
 #include <winbase.h>
+#include <cstdlib>
+
 #endif
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
 using json = nlohmann::json;

@@ -5,7 +5,9 @@
 #include <napi.h>
 #include <nlohmann/json.hpp>
 #include <iostream>
-
+#ifdef _WIN32
+#include <cstdlib>
+#endif
 struct discord_simple_response {
   bool success;
   std::string value;

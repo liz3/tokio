@@ -5,7 +5,7 @@ DisWebsocket::DisWebsocket(std::string& socket_url,std::string &token, bool auto
   this->webSocket.disablePerMessageDeflate();
   #ifdef _WIN32 
   ix::SocketTLSOptions opt;
-  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
   this->webSocket.setTLSOptions(opt);
   #endif
   this->seq = 0;

@@ -15,6 +15,9 @@
 #include "discord_utils.h"
 #include "../zstr/zstr.h"
 #include "event_handler.h"
+#ifdef _WIN32
+#include <cstdlib>
+#endif
 using json = nlohmann::json;
 typedef void (* vCallback)(Napi::Env env, Napi::Function jsCallback, std::string* value);
 using VoiceInitCallback = std::function<void(const json&,const json&)>;

@@ -8,7 +8,7 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
   this->webSocket.setUrl(target_endpoint);
    #ifdef _WIN32 
   ix::SocketTLSOptions opt;
-  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
   this->webSocket.setTLSOptions(opt);
   #endif
   this->session_id = voice_state["session_id"];

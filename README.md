@@ -13,13 +13,18 @@ docker pull liz3/relight
 
 # building
 
+## Windows
+
+For windows you will have to install [vcpkg](https://github.com/microsoft/vcpkg#quick-start)
+
+```
 > vcpkg install libsodium:x64-windows
 > vcpkg install opusfile:x64-windows
 > vcpkg install opus:x64-windows
 > vcpkg install ixwebsocket:x64-windows
 > vcpkg install nlohmann-json:x64-windows
 > vcpkg install libmad:x64-windows
-> **Note**: Atm theres no windows support. tho adding in the future is not excluded
+```
 
 ## prerequisites
 

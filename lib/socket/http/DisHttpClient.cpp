@@ -6,7 +6,7 @@ DisHttpClient::DisHttpClient(std::string& token) {
   this->client = new HttpClient(true);
   #ifdef _WIN32 
   ix::SocketTLSOptions opt;
-  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
   this->client->setTLSOptions(opt);
   #endif
 }
@@ -47,7 +47,7 @@ discord_simple_response DisHttpClient::discord_get_gateway_endpoint(std::string&
   args->connectTimeout = 10000;
   args->transferTimeout = 10000;
   ix::SocketTLSOptions opt;
-  opt.caFile = "C:\\Users\\liz3\\Downloads\\cacert.pem";
+  opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
   httpClient.setTLSOptions(opt);
   #endif
   args->extraHeaders = DisHttpClient::get_default_headers(token);
