@@ -1,4 +1,4 @@
-const dis_light = require("bindings")("dis_light");
+const dis_light = require("bindings")("tokio");
 import { generateTextChannel, generateVoiceChannel } from "../impl/channel";
 import { getGuild } from "../impl/guild";
 interface Instance {

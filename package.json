@@ -4,7 +4,7 @@
   "description": "C++ library for high performance discord audio trhoughput",
   "main": "index.js",
   "scripts": {
-    "start": "cmake-js compile && node index.js",
+    "start": "node index.js",
     "compile": "cd bindings && tsc && cd .. && cmake-js compile"
   },
   "keywords": [

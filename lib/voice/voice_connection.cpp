@@ -26,12 +26,12 @@ void VoiceConnection::send(unsigned char* buffer, int size) {
          sizeof(servaddr));
   if (result == SOCKET_ERROR) {
     std::cout << "send failed: " << WSAGetLastError() << "\n";
-}        
+}
   #else
   sendto(sockfd,buffer, sizeof(unsigned char) * size,
         0, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
-  #endif       
+  #endif
 }
 void VoiceConnection::preparePacket(uint8_t*& encodedAudioData, int len) {
   const uint8_t header[12] = {
@@ -202,7 +202,6 @@ void VoiceConnection::playWavFile(std::string filePath) {
   stream.read(reinterpret_cast<char *>(&Subchunk3Size), sizeof(Subchunk3Size));
   sendCounter = 0;
   startTime = high_resolution_clock::now();
-    std::cout << "in playback for wav: " << Subchunk3Size << "\n";
 
   while(1) {
     if(Subchunk3Size <= 0) break;
@@ -234,7 +233,6 @@ void VoiceConnection::playWavFile(std::string filePath) {
   stream.close();
 }
 void VoiceConnection::playOpusFile(std::string filePath) {
-  std::cout << "in play\n";
   using namespace std::chrono;
   const char* filename = filePath.c_str();
   int* opus_err;
@@ -293,7 +291,7 @@ bool VoiceConnection::setupAndHandleSocket() {
     sendto(sockfd, (const char *)buf.str().c_str(), 70,
         MSG_WAITALL, ( struct sockaddr *) &servaddr,
          sizeof(servaddr));
-  #endif    
+  #endif
   int n;
   socklen_t len;
   char recv_buff[1024];
