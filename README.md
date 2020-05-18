@@ -57,6 +57,9 @@ Then simply: `./setup.sh`
 
 ### Windows
 
+**NOTE**: ATM you need to patch the port file for `iXWebsocket`
+Replace the Content of: /path/to/vcpkg-root/ports/ixwebsocket/portfile.cmake with the one in the root of this project.
+
 Run this in the folder where you installed vcpkg
 
 ```
@@ -66,6 +69,7 @@ Run this in the folder where you installed vcpkg
 > vcpkg install ixwebsocket:x64-windows
 > vcpkg install nlohmann-json:x64-windows
 > vcpkg install libmad:x64-windows
+> vcpkg install openssl:x64-windows
 ```
 
 ## Setup
@@ -84,9 +88,6 @@ Run this in the folder where you installed vcpkg
 
 # Running
 
-On windows **At The moment** you will have to download the extracted root certificate from firefox in order to establish connections.
-[Download here](https://curl.haxx.se/docs/caextract.html)
-
 After building, in order to run you can use the `npm start` script.
 
 ## macOS & GNU/Linux
@@ -100,7 +101,7 @@ TOKEN=my_discord_token npm start
 (Use git bash)
 
 ```sh
-TOKEN=my_discord_token TOKIO_CERTPATH="C:\Users\liz3\Downloads\cacert.pem" npm start
+TOKEN=my_discord_token npm start
 ```
 
 ## Youtube dl

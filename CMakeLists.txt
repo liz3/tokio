@@ -36,9 +36,7 @@ if(WIN32)
     find_package(Opus CONFIG REQUIRED)
     find_library(MAD_LIBRARY mad)
     find_library(OGG_LIBRARY ogg)
-    find_library(MBEDCRYPTO_LIBRARY mbedcrypto)
-    find_library(MBEDTLS_LIBRARY mbedtls)
-    find_library(MBEDX_LIBRARY mbedx509)
+    find_package(OpenSSL REQUIRED)
     find_path(IXWEBSOCKET_INCLUDE_DIR ixwebsocket/IXWebSocket.h)
     find_library(IXWEBSOCKET_LIBRARY ixwebsocket)
     include_directories(${IXWEBSOCKET_INCLUDE_DIR})
@@ -46,8 +44,27 @@ if(WIN32)
     find_library(OPUSFILE_LIBRARY opusfile)
     include_directories(${OPUSFILE_INCLUDE_DIR})
     find_package(unofficial-sodium CONFIG REQUIRED)
-    message(${MBEDTLS_LIBRARY})
-    target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json nlohmann_json::nlohmann_json unofficial-sodium::sodium Opus::opus ws2_32 ${MBEDX_LIBRARY} ${MBEDTLS_LIBRARY} ${MBEDCRYPTO_LIBRARY} ${IXWEBSOCKET_LIBRARY} ${OGG_LIBRARY} ${OPUSFILE_LIBRARY} ${MAD_LIBRARY} ${CMAKE_JS_LIB})
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+     # JSON
+     nlohmann_json
+     nlohmann_json::nlohmann_json
+     # Crypto
+     unofficial-sodium::sodium 
+     OpenSSL::SSL 
+     OpenSSL::Crypto 
+     # WINDOWS STUPIDITY
+     ws2_32 
+     shlwapi 
+     crypt32 
+     #NET
+     ${IXWEBSOCKET_LIBRARY} 
+     #AUDIO
+     ${OGG_LIBRARY}
+     Opus::opus 
+     ${OPUSFILE_LIBRARY}
+     ${MAD_LIBRARY}
+     # Node addon api 
+     ${CMAKE_JS_LIB})
 else()
   find_package(nlohmann_json 3.2.0 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})

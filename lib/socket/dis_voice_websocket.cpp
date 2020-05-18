@@ -6,11 +6,6 @@ DisVoiceWebsocket::DisVoiceWebsocket(const json& server_state, const json& voice
   this->channel_id = channel_id;
   std::string target_endpoint = "wss://"+ std::string(server_state["endpoint"]).substr(0, std::string(server_state["endpoint"]).length() -3) + "/?v=4";
   this->webSocket.setUrl(target_endpoint);
-#ifdef _WIN32
-  ix::SocketTLSOptions opt;
-  opt.caFile = std::string(std::getenv("TOKIO_CERTPATH"));
-  this->webSocket.setTLSOptions(opt);
-#endif
   this->session_id = voice_state["session_id"];
   this->webSocket.disablePerMessageDeflate();
   this->seq = 0;
