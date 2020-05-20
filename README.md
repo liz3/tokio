@@ -57,16 +57,13 @@ Then simply: `./setup.sh`
 
 ### Windows
 
-**NOTE**: ATM you need to patch the port file for `iXWebsocket`
-Replace the Content of: /path/to/vcpkg-root/ports/ixwebsocket/portfile.cmake with the one in the root of this project.
-
 Run this in the folder where you installed vcpkg
 
 ```
 > vcpkg install libsodium:x64-windows
 > vcpkg install opusfile:x64-windows
 > vcpkg install opus:x64-windows
-> vcpkg install ixwebsocket:x64-windows
+> vcpkg install ixwebsocket[mbedtls]:x64-windows
 > vcpkg install nlohmann-json:x64-windows
 > vcpkg install libmad:x64-windows
 > vcpkg install openssl:x64-windows

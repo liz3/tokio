@@ -36,7 +36,9 @@ if(WIN32)
     find_package(Opus CONFIG REQUIRED)
     find_library(MAD_LIBRARY mad)
     find_library(OGG_LIBRARY ogg)
-    find_package(OpenSSL REQUIRED)
+    find_library(MBEDCRYPTO_LIBRARY mbedcrypto)
+    find_library(MBEDTLS_LIBRARY mbedtls)
+    find_library(MBEDX_LIBRARY mbedx509)
     find_path(IXWEBSOCKET_INCLUDE_DIR ixwebsocket/IXWebSocket.h)
     find_library(IXWEBSOCKET_LIBRARY ixwebsocket)
     include_directories(${IXWEBSOCKET_INCLUDE_DIR})
@@ -50,12 +52,12 @@ if(WIN32)
      nlohmann_json::nlohmann_json
      # Crypto
      unofficial-sodium::sodium 
-     OpenSSL::SSL 
-     OpenSSL::Crypto 
      # WINDOWS STUPIDITY
-     ws2_32 
-     shlwapi 
-     crypt32 
+     ws2_32
+     crypt32
+     ${MBEDX_LIBRARY}
+     ${MBEDTLS_LIBRARY}
+     ${MBEDCRYPTO_LIBRARY} 
      #NET
      ${IXWEBSOCKET_LIBRARY} 
      #AUDIO
