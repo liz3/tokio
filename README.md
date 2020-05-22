@@ -29,6 +29,8 @@ docker pull liz3/relight
 
 ## Windows
 
+**Note**: The windows support isnt fully done and i cannot guarantee stability on windows
+
 First of install [windows-build-toold](https://www.npmjs.com/package/windows-build-tools)
 (Admin cmd/Powershell)
 
