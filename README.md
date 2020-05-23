@@ -68,7 +68,6 @@ Run this in the folder where you installed vcpkg
 > vcpkg install ixwebsocket[mbedtls]:x64-windows
 > vcpkg install nlohmann-json:x64-windows
 > vcpkg install libmad:x64-windows
-> vcpkg install openssl:x64-windows
 ```
 
 ## Setup
