@@ -32,6 +32,7 @@ class DisVoiceWebsocket {
   void registerEventListener(std::string& name, Napi::Function callback);
   VoiceConnection* voiceConn = nullptr;
   void playFile(std::string& path, std::string type);
+  void updateGain(float value);
   void handleStop();
   void handleDisconnect();
  private:

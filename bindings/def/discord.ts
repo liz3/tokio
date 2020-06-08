@@ -36,6 +36,7 @@ interface VoiceConnection {
   playing: boolean;
   connected: boolean;
   stop(): void;
+  setGain(value: number);
   disconnect(): void;
 }
 

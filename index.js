@@ -22,6 +22,7 @@ init(process.env.TOKEN).then((instance) => {
       !result.content.startsWith("!play") &&
       !result.content.startsWith("!disconnect") &&
       !result.content.startsWith("!stop") &&
+      !result.content.startsWith("!volume") &&
       !result.content.startsWith("!download")
     )
       return;
@@ -45,6 +46,16 @@ init(process.env.TOKEN).then((instance) => {
       }
       return;
     }
+    if (result.content.startsWith("!volume")) {
+      if (voiceConn) {
+        const value = Number.parseFloat(result.content.split(" ")[1], 10);
+        if (isNaN(value)) return;
+        voiceConn.setGain(value);
+        result.channel.send(`Updating volume to ${value}`);
+      }
+      return;
+    }
+
     if (result.content === "!disconnect") {
       if (voiceConn) {
         voiceConn.disconnect();

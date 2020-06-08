@@ -128,7 +128,7 @@ void VoiceConnection::playFile(std::string filePath) {
       audio_set.push_back(r);
       --s;
       if(s == 0 || sample_len<0) {
-
+        adjustGain(gain, &audio_set);
         std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(audio_set, kFrameSize);
         auto entry = opus_out[0];
         uint8_t * encodedAudioDataPointer = &entry[0];
@@ -188,38 +188,45 @@ void VoiceConnection::playWavFile(std::string filePath) {
   char data [5];
   stream.read(data, 4);
   data[4] = '\0';
-  int32_t Subchunk2Size;
-  stream.read(reinterpret_cast<char *>(&Subchunk2Size), sizeof(Subchunk2Size));
-#ifdef _WIN32
-  char* LIST = new char[Subchunk2Size +1];
-#else
-  char LIST[Subchunk2Size +1];
-#endif
-
-  stream.read(LIST, Subchunk2Size);
-  LIST[Subchunk2Size + 1] = '\0';
-  stream.read(data, 4);
+  std::string asStr = std::string(data);
+  if(asStr == "LIST") {
+    int32_t Subchunk2Size;
+    stream.read(reinterpret_cast<char *>(&Subchunk2Size), sizeof(Subchunk2Size));
+    int length = stream.tellg();
+    stream.seekg(length + Subchunk2Size + 4);
+  }
   int32_t Subchunk3Size;
   stream.read(reinterpret_cast<char *>(&Subchunk3Size), sizeof(Subchunk3Size));
   sendCounter = 0;
+  int size = kFrameSize * 2;
   startTime = high_resolution_clock::now();
-
   while(1) {
     if(Subchunk3Size <= 0) break;
-    int size = kFrameSize * 2;
-    Subchunk3Size -= size * 2;
-#ifdef _WIN32
+    if(this->interuptFlag) {
+      this->running = false;
+      this->interuptFlag = false;
+      stream.close();
+      return;
+    }
     opus_int16* buff = new opus_int16[size];
-#else
-    opus_int16 buff[size];
-#endif
-    stream.read(reinterpret_cast<char *>(&buff), size * 2);
+    if(NumChannels == 1) {
+      opus_int16* actBuff = new opus_int16[kFrameSize];
+      stream.read(reinterpret_cast<char *>(actBuff), kFrameSize * 2);
+      duplicate_signal(actBuff,actBuff,buff,kFrameSize);
+      delete [] actBuff;
+      Subchunk3Size -= kFrameSize * 2;
+    } else {
+      Subchunk3Size -= size * 2;
+      stream.read(reinterpret_cast<char *>(buff), size * 2);
+    }
     std::vector<opus_int16> values(buff, buff + size);
+    adjustGain(gain, &values);
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
     }
+    delete[] buff;
     //sleep logic
     ++sendCounter;
 
@@ -252,6 +259,7 @@ void VoiceConnection::playOpusFile(std::string filePath) {
     int o = op_read(file,buff,size, NULL);
     if(o <= 0) break;
     std::vector<opus_int16> values(buff, buff + size);
+    adjustGain(gain, &values);
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
     for(auto entry : opus_out) {
       uint8_t * encodedAudioDataPointer = &entry[0];
@@ -269,7 +277,6 @@ void VoiceConnection::playOpusFile(std::string filePath) {
   }
   op_free(file);
 }
-
 bool VoiceConnection::setupAndHandleSocket() {
   sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   memset(&servaddr, 0, sizeof(servaddr));

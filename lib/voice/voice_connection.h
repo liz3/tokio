@@ -59,60 +59,29 @@ class VoiceConnection {
   struct mad_stream mad_stream;
   struct mad_frame mad_frame;
   struct mad_synth mad_synth;
-
- public:
-  static std::string string_to_hex(const std::string& input) {
-    static const char hex_digits[] = "0123456789ABCDEF";
-
-    std::string output;
-    output.reserve(input.length() * 2);
-    for (unsigned char c : input) {
-      output.push_back(hex_digits[c >> 4]);
-      output.push_back(hex_digits[c & 15]);
-    }
-    return output;
-  }
-
-  VoiceConnection(std::string& address, int port, int ssrc);
   static short getShortBigEndian(char arr[], int offset) {
     return (short) ((arr[offset    ] & 0xff << 8)
                     | (arr[offset + 1] & 0xff));
   };
-  static void setIntBigEndian(unsigned char arr[], int offset, int it) {
-    arr[offset    ] = (unsigned char) ((it >> 24) & 0xFF);
-    arr[offset + 1] = (unsigned char) ((it >> 16) & 0xFF);
-    arr[offset + 2] = (unsigned char) ((it >> 8)  & 0xFF);
-    arr[offset + 3] = (unsigned char) ( it         & 0xFF);
+  static void duplicate_signal(opus_int16 * in_L,
+                               opus_int16 * in_R,
+                               opus_int16 * out,
+                               const size_t num_samples) {
+    for (size_t i = 0; i < num_samples; ++i) {
+      out[i * 2] = in_L[i];
+      out[i * 2 + 1] = in_R[i];
+    }
   }
-  static int scale(mad_fixed_t sample) {
-    /* round */
-    sample += (1L << (MAD_F_FRACBITS - 16));
-    /* clip */
-    if (sample >= MAD_F_ONE)
-      sample = MAD_F_ONE - 1;
-    else if (sample < -MAD_F_ONE)
-      sample = -MAD_F_ONE;
-    /* quantize */
-    return sample >> (MAD_F_FRACBITS + 1 - 16);
+  static void adjustGain(float gain, std::vector<opus_int16>* values) {
+    if(gain != 1) {
+      for(int i = 0; i < values->size(); i++) {
+        (*values)[i] = (*values)[i] * gain;
+      }
+    }
   }
-  static std::vector<unsigned char> to_vector(std::stringstream& ss) {
-    // discover size of data in stream
-    ss.seekg(0, std::ios::beg);
-    auto bof = ss.tellg();
-    ss.seekg(0, std::ios::end);
-    auto stream_size = std::size_t(ss.tellg() - bof);
-    ss.seekg(0, std::ios::beg);
-
-    // make your vector long enough
-    std::vector<unsigned char> v(stream_size);
-
-    // read directly in
-    ss.read((char*)v.data(), std::streamsize(v.size()));
-
-    return v;
-  }
-
-
+ public:
+  float gain = 1;
+  VoiceConnection(std::string& address, int port, int ssrc);
   bool setupAndHandleSocket();
   std::string own_ip;
   int own_port = 0;

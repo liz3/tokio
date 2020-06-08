@@ -1,6 +1,17 @@
 import { prepareFile } from "./youtube-dl";
+import { existsSync, unlink } from "fs";
 const cache = {};
 const voiceCache = {};
+
+let currentFile;
+
+const clearCurrentFile = () => {
+  if (currentFile) {
+    if (existsSync(currentFile)) {
+      unlink(currentFile, () => {});
+    }
+  }
+};
 
 export function generateTextChannel(
   channelId: string,
@@ -66,14 +77,20 @@ export function generateVoiceChannel(channelId: string, guildId: string, bot) {
               });
             },
             disconnect: () => {
+              clearCurrentFile();
               result.disconnect();
               connection.connected = false;
             },
+            setGain(value: number) {
+              result.setGain(value);
+            },
             stop: () => {
+              clearCurrentFile();
               result.stop();
               connection.playing = false;
             },
             playFile: (path: string) => {
+              clearCurrentFile();
               const lower = path.toLowerCase();
               if (lower.endsWith(".opus")) {
                 connection.playing = true;
@@ -92,6 +109,7 @@ export function generateVoiceChannel(channelId: string, guildId: string, bot) {
               ) {
                 prepareFile(path)
                   .then((resultFile) => {
+                    currentFile = resultFile;
                     result.playOpusFile(resultFile);
                   })
                   .catch((err) => console.log(err));

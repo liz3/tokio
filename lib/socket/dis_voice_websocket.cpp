@@ -171,6 +171,10 @@ void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
   });
   t.detach();
 }
+void DisVoiceWebsocket::updateGain(float value) {
+  if(!this->running || this->voiceConn == nullptr) return;
+  this->voiceConn->gain = value;
+}
 void DisVoiceWebsocket::handleStop() {
   if(!this->running || this->voiceConn == nullptr || !this->playing) return;
   this->voiceConn->interuptFlag = true;
