@@ -53,12 +53,12 @@ void VoiceConnection::playPiped(int mode, std::string url) {
     execvp(args_arr[0], static_cast<char* const*>((void*)args_arr));
 
   } else {
-
+    bool ended = false;
     sendCounter = 0;
     close (fd[1]);
      std::vector<std::vector<opus_int16>> cached_frames;
      auto finalThis = this;
-     std::thread t([&cached_frames, &fd, &finalThis](){
+     std::thread t([&cached_frames, &fd, &finalThis, &pid, &ended](){
        size_t needed = (kFrameSize * 2);
        std::vector<opus_int16> data_buffer;
        int last = 1;
@@ -82,12 +82,16 @@ void VoiceConnection::playPiped(int mode, std::string url) {
            }
        }
          close(fd[0]);
+         wait(&pid);
+         ended = true;
      });
      while(true) {
 
        if(this->interuptFlag) {
-         kill(pid, SIGTERM);
-         wait(&pid);
+         if(!ended) {
+           kill(pid, SIGTERM);
+           wait(&pid);
+         }
          this->running = false;
          this->interuptFlag = false;
          t.join();
@@ -119,6 +123,7 @@ void VoiceConnection::playPiped(int mode, std::string url) {
 
        }
      }
+
      t.join();
   }
 }
