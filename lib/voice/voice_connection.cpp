@@ -36,7 +36,7 @@ void VoiceConnection::playPiped(int mode, std::string url) {
     args.push_back("-ac");
     args.push_back("2");
     args.push_back("-acodec");
-    args.push_back("libopus");
+    args.push_back("pcm_s16le");
     args.push_back("-sample_fmt");
     args.push_back("s16");
     args.push_back("-vbr");
@@ -57,16 +57,15 @@ void VoiceConnection::playPiped(int mode, std::string url) {
      std::vector<std::vector<opus_int16>> cached_frames;
      auto finalThis = this;
      std::thread t([&cached_frames, &fd, &finalThis](){
-       opus::Decoder decoder(kSampleRate, kNumChannels);
        size_t needed = (kFrameSize * 2);
        std::vector<opus_int16> data_buffer;
        int last = 1;
          while(last != 0 && !finalThis->interuptFlag) {
            int remaining = needed - data_buffer.size();
-           uint8_t buf[1000];
-           int received = read(fd[0], buf, 1000);
+           opus_int16* buf = new opus_int16[remaining];
+           int received = read(fd[0], buf, sizeof(opus_int16) * remaining) / sizeof(opus_int16);
            last = received;
-           auto decoded = decoder.Decode(std::vector(buf, buf+received), kFrameSize, false);
+           auto decoded = std::vector<opus_int16>(buf, buf + received);
            if(decoded.size() > remaining) {
              data_buffer.insert(data_buffer.end(), decoded.begin(), decoded.begin()+remaining);
              cached_frames.push_back(data_buffer);
@@ -80,6 +79,7 @@ void VoiceConnection::playPiped(int mode, std::string url) {
              }
            }
        }
+         close(fd[0]);
      });
      while(true) {
 
