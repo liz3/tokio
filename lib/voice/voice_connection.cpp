@@ -1,4 +1,5 @@
 #include "voice_connection.h"
+#include <signal.h>
 
 
 VoiceConnection::VoiceConnection(std::string& address, int port, int ssrc) : encoder( opus::Encoder(kSampleRate, kNumChannels, OPUS_APPLICATION_AUDIO)), address(address), port(port), ssrc(ssrc) {
@@ -52,6 +53,7 @@ void VoiceConnection::playPiped(int mode, std::string url) {
     execvp(args_arr[0], static_cast<char* const*>((void*)args_arr));
 
   } else {
+
     sendCounter = 0;
     close (fd[1]);
      std::vector<std::vector<opus_int16>> cached_frames;
@@ -84,6 +86,8 @@ void VoiceConnection::playPiped(int mode, std::string url) {
      while(true) {
 
        if(this->interuptFlag) {
+         kill(pid, SIGTERM);
+         wait(&pid);
          this->running = false;
          this->interuptFlag = false;
          t.join();
