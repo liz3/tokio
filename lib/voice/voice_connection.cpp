@@ -52,16 +52,16 @@ void VoiceConnection::playPiped(int mode, std::string url) {
     execvp(args_arr[0], static_cast<char* const*>((void*)args_arr));
 
   } else {
-         sendCounter = 0;
-         close (fd[1]);
+    sendCounter = 0;
+    close (fd[1]);
      std::vector<std::vector<opus_int16>> cached_frames;
-
-     std::thread t([&cached_frames, &fd](){
+     auto finalThis = this;
+     std::thread t([&cached_frames, &fd, &finalThis](){
        opus::Decoder decoder(kSampleRate, kNumChannels);
        size_t needed = (kFrameSize * 2);
        std::vector<opus_int16> data_buffer;
        int last = 1;
-         while(last != 0) {
+         while(last != 0 && !finalThis->interuptFlag) {
            int remaining = needed - data_buffer.size();
            uint8_t buf[1000];
            int received = read(fd[0], buf, 1000);
@@ -82,6 +82,13 @@ void VoiceConnection::playPiped(int mode, std::string url) {
        }
      });
      while(true) {
+
+       if(this->interuptFlag) {
+         this->running = false;
+         this->interuptFlag = false;
+         t.join();
+         return;
+       }
 
        if (cached_frames.size() == 160) {
          startTime = high_resolution_clock::now();
