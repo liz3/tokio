@@ -8,8 +8,8 @@ set (CMAKE_CXX_STANDARD 17)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 project (tokio)
 message(INFO ${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_JS_INC} /usr/local/include/ /usr/local/Cellar/libsodium/1.0.18_1/include /usr/local/opt/mad/include /usr/local/Cellar/opusfile/0.11_1/include /usr/local/Cellar/libogg/1.3.4/include /usr/local/include/opus /usr/include/opus)
-link_directories(/usr/local/lib/ /usr/local/Cellar/libsodium/1.0.18_1/lib /usr/local/opt/mad/lib /usr/local/Cellar/opusfile/0.11_1/lib)
+include_directories(${CMAKE_JS_INC} /usr/local/include/ /usr/local/Cellar/libsodium/1.0.18_1/include /usr/local/opt/mad/include /usr/local/Cellar/opusfile/0.11_1/include /usr/local/Cellar/libogg/1.3.4/include /usr/local/include/opus /usr/include/opus /opt/homebrew/Cellar/opus/1.3.1/include/opus /opt/homebrew/Cellar/opusfile/0.12/include/opus /opt/homebrew/Cellar/libsodium/1.0.18_1/include/sodium /opt/homebrew/Cellar/mad/0.15.1b/include)
+link_directories(/usr/local/lib/ /usr/local/Cellar/libsodium/1.0.18_1/lib /usr/local/opt/mad/lib /usr/local/Cellar/opusfile/0.11_1/lib /opt/homebrew/Cellar/opus/1.3.1/lib /opt/homebrew/Cellar/opusfile/0.12/lib /opt/homebrew/Cellar/libsodium/1.0.18_1/lib /opt/homebrew/Cellar/mad/0.15.1b/lib)
 file(GLOB SOURCE_FILES "lib/bindings.cc")
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC}
     lib/instance.cpp
@@ -51,21 +51,21 @@ if(WIN32)
      nlohmann_json
      nlohmann_json::nlohmann_json
      # Crypto
-     unofficial-sodium::sodium 
+     unofficial-sodium::sodium
      # WINDOWS STUPIDITY
      ws2_32
      crypt32
      ${MBEDX_LIBRARY}
      ${MBEDTLS_LIBRARY}
-     ${MBEDCRYPTO_LIBRARY} 
+     ${MBEDCRYPTO_LIBRARY}
      #NET
-     ${IXWEBSOCKET_LIBRARY} 
+     ${IXWEBSOCKET_LIBRARY}
      #AUDIO
      ${OGG_LIBRARY}
-     Opus::opus 
+     Opus::opus
      ${OPUSFILE_LIBRARY}
      ${MAD_LIBRARY}
-     # Node addon api 
+     # Node addon api
      ${CMAKE_JS_LIB})
 else()
   find_package(nlohmann_json 3.2.0 REQUIRED)

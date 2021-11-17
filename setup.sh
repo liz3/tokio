@@ -6,7 +6,7 @@ cmake -DUSE_TLS=1 ..
 make -j
 if [ $(uname) == "Darwin" ]
 then
-    make install
+    sudo make install
 else
     sudo make install
 fi

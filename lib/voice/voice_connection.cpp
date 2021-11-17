@@ -8,6 +8,109 @@ VoiceConnection::VoiceConnection(std::string& address, int port, int ssrc) : enc
   }
 
 }
+void VoiceConnection::playPiped(int mode, std::string url) {
+  using namespace std::chrono;
+  int fd[2], pid;
+  pipe(fd);
+  pid = fork();
+  if(pid == 0) {
+
+    close (1);
+    dup(fd[1]);
+    close (0);
+    close (2);
+    close (fd[0]);
+    close (fd[1]);
+    std::vector<std::string> args;
+    args.push_back("ffmpeg");
+    args.push_back("-user_agent");
+    args.push_back("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.114 Safari/537.36");
+    args.push_back("-i");
+    args.push_back(url);
+    args.push_back("-f");
+    args.push_back("data");
+    args.push_back("-map");
+    args.push_back("0:a");
+    args.push_back("-ar");
+    args.push_back("48k");
+    args.push_back("-ac");
+    args.push_back("2");
+    args.push_back("-acodec");
+    args.push_back("libopus");
+    args.push_back("-sample_fmt");
+    args.push_back("s16");
+    args.push_back("-vbr");
+    args.push_back("off");
+    args.push_back("-b:a");
+    args.push_back("64000");
+    args.push_back("pipe:1");
+    const char** args_arr = new const char* [args.size() + 1];
+    for(size_t i = 0; i < args.size(); i++) {
+      args_arr[i] = args[i].c_str();
+    }
+    args_arr[args.size()] = nullptr;
+    execvp(args_arr[0], static_cast<char* const*>((void*)args_arr));
+
+  } else {
+         sendCounter = 0;
+         close (fd[1]);
+     std::vector<std::vector<opus_int16>> cached_frames;
+
+     std::thread t([&cached_frames, &fd](){
+       opus::Decoder decoder(kSampleRate, kNumChannels);
+       size_t needed = (kFrameSize * 2);
+       std::vector<opus_int16> data_buffer;
+       int last = 1;
+         while(last != 0) {
+           int remaining = needed - data_buffer.size();
+           uint8_t buf[1000];
+           int received = read(fd[0], buf, 1000);
+           last = received;
+           auto decoded = decoder.Decode(std::vector(buf, buf+received), kFrameSize, false);
+           if(decoded.size() > remaining) {
+             data_buffer.insert(data_buffer.end(), decoded.begin(), decoded.begin()+remaining);
+             cached_frames.push_back(data_buffer);
+             std::vector<opus_int16> next(decoded.begin()+remaining, decoded.end());
+             data_buffer=next;
+           } else {
+             data_buffer.insert(data_buffer.end(), decoded.begin(), decoded.end());
+             if(data_buffer.size() == needed) {
+               cached_frames.push_back(data_buffer);
+               data_buffer.clear();
+             }
+           }
+       }
+     });
+     while(true) {
+
+       if (cached_frames.size() == 160) {
+         startTime = high_resolution_clock::now();
+       }
+       if (cached_frames.size() >= 160) {
+         auto current_frame = cached_frames[sendCounter];
+         adjustGain(gain, &current_frame);
+         std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(current_frame, kFrameSize);
+         for(auto entry : opus_out) {
+           uint8_t * encodedAudioDataPointer = &entry[0];
+           this->preparePacket(encodedAudioDataPointer, entry.size());
+         }
+
+         ++sendCounter;
+         if(sendCounter >= cached_frames.size())
+           break;
+
+         high_resolution_clock::time_point t2 = high_resolution_clock::now();
+         duration<double> abs_elapsed = duration_cast<duration<double>>(t2 - startTime);
+         double play_head = kFrameSizeSecs * sendCounter;
+         double delay = play_head - abs_elapsed.count();
+         if(delay > 0)
+           std::this_thread::sleep_for(std::chrono::microseconds((int) (delay * 1000000)));
+
+       }
+     }
+     t.join();
+  }
+}
 void VoiceConnection::startHeartBeat(int interval) {
   auto finalThis = this;
   std::thread t([interval, finalThis]() {
@@ -258,10 +361,13 @@ void VoiceConnection::playOpusFile(std::string filePath) {
     opus_int16* buff = new opus_int16[size];
     int o = op_read(file,buff,size, NULL);
     if(o <= 0) break;
+    std::cout << o  << "\n";
     std::vector<opus_int16> values(buff, buff + size);
     adjustGain(gain, &values);
     std::vector<std::vector<unsigned char>> opus_out = encoder.Encode(values, kFrameSize);
+    std::cout << "length" << opus_out.size() << "\n";
     for(auto entry : opus_out) {
+      std::cout << entry.size() << "\n";
       uint8_t * encodedAudioDataPointer = &entry[0];
       this->preparePacket(encodedAudioDataPointer, entry.size());
     }

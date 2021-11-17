@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "compile": "cd bindings && tsc && cd .. && cmake-js compile",
+    "compile-only": "cmake-js compile",
     "format": "which astyle && astyle -n --style=google --indent=spaces=2  --recursive  \"lib/*.cc,*.h,*.c,*.cpp\""
   },
   "keywords": [

@@ -108,9 +108,14 @@ export function generateVoiceChannel(channelId: string, guildId: string, bot) {
                 lower.startsWith("https://")
               ) {
                 prepareFile(path)
-                  .then((resultFile) => {
-                    currentFile = resultFile;
-                    result.playOpusFile(resultFile);
+                  .then((resultData) => {
+                    const match = resultData.formats
+                      .filter(
+                        (entry) =>
+                          entry.acodec === "opus" && entry.vcodec === "none"
+                      )
+                      .sort((a, b) => b.filesize - a.filesize);
+                    if (match.length) result.playPiped(0, match[0].url);
                   })
                   .catch((err) => console.log(err));
               }

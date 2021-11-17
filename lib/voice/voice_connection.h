@@ -89,6 +89,7 @@ class VoiceConnection {
   void send(unsigned char* buffer, int size);
   std::vector<unsigned char> key;
   int keyLength = 0;
+  void playPiped(int mode, std::string url);
   void playFile(std::string filePath);
   void playOpusFile(std::string filePath);
   void playWavFile(std::string filePath);

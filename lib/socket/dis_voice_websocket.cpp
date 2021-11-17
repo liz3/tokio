@@ -145,7 +145,7 @@ void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
     return;
   }
 #else
-  if( access(path.c_str(), F_OK ) != -1 ) {
+  if( access(path.c_str(), F_OK ) != -1 || type == "pipe" ) {
     // file exists
   } else {
     std::cout << "lul " << type << "\n";
@@ -162,6 +162,8 @@ void DisVoiceWebsocket::playFile(std::string& path, std::string type) {
       finalThis->voiceConn->playOpusFile(std::move(path));
     } else if(type.compare("wav") == 0) {
       finalThis->voiceConn->playWavFile(std::move(path));
+    } else if (type.compare("pipe") == 0) {
+      finalThis->voiceConn->playPiped(0, std::move(path));
     } else {
       //Todo error
     }

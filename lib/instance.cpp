@@ -166,7 +166,7 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
         std::string path = info[0].As<Napi::String>().Utf8Value();
         socket->playFile(path, "mpeg");
       }
-                                             ));
+          ));
       obj.Set("playOpusFile", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
         auto env = info.Env();
         if (info.Length() != 1) {
@@ -177,7 +177,19 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
         std::string path = info[0].As<Napi::String>().Utf8Value();
         socket->playFile(path, "opus");
       }
-                                                 ));
+          ));
+      obj.Set("playPiped", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
+        auto env = info.Env();
+        if (info.Length() != 2) {
+          Napi::TypeError::New(env, "Wrong number of arguments")
+          .ThrowAsJavaScriptException();
+          return;
+        }
+        int32_t mode = info[0].As<Napi::Number>().Int32Value();
+        std::string url = info[1].As<Napi::String>().Utf8Value();
+        socket->playFile( url, "pipe");
+      }
+          ));
       obj.Set("playWavFile", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
         auto env = info.Env();
         if (info.Length() != 1) {
@@ -189,7 +201,7 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
         socket->playFile(path, "wav");
       }
 
-                                                ));
+          ));
       obj.Set("setGain", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
         auto env = info.Env();
         if (info.Length() != 1) {
@@ -200,7 +212,7 @@ void Instance::generateVoiceBindings(Napi::Env env, Napi::Function callback, std
         float value = info[0].As<Napi::Number>().FloatValue();
         socket->updateGain(value);
       }
-                                            ));
+          ));
 
       obj.Set("stop", Napi::Function::New(env, [socket](const Napi::CallbackInfo& info) {
         socket->handleStop();
